@@ -1,0 +1,69 @@
+\documentclass[a4paper]{article}
+
+\newcommand{\Rfunction}[1]{{\texttt{#1}}}
+\newcommand{\Robject}[1]{{\texttt{#1}}}
+\newcommand{\Rpackage}[1]{{\textit{#1}}}
+\newcommand{\Rclass}[1]{{\textit{#1}}}
+\newcommand{\Rmethod}[1]{{\textit{#1}}}
+
+\author{HC Ji\footnote{ji.hongchao@csu.edu.cn}}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+\setkeys{Gin}{width=1\textwidth} 
+\title{Using the KPIC package}
+\maketitle
+
+\section{Overview} 
+KPIC2 is an effective platform for LC-MS based metabolomics using pure ion chromatograms, which is developed for metabolomics studies. KPIC2 can detect pure ions accurately, align PICs across samples, group PICs to annotate isotope and adduct PICs, fill missing peaks and pattern recognition. High-resolution mass spectrometers like TOF and Orbitrap are more suitable.
+
+\section{Raw Data File Preparation}
+The \Rpackage{KPIC} package readspackage reads full-scan LC/MS data from mzXML and mzData files.
+<<LoadLib>>=
+library(KPIC)
+@
+In the user guide, faahKO dataset is taken as example, though the data is not high-resolution. The files are obtained from the \Rpackage{faahKO}
+<<LoadData>>=
+library(faahKO)
+path <- system.file("CDF", package = "faahKO")
+@
+
+\section{Extraction of Pure Ion Chromatograms}
+Extract pure ion chromatograms via optimized K-means clustering of ions in region of interest, and detect peaks of PICs
+<<Extracing PICs>>=
+st <- KPICset(path,range=20,level=5000,alpha=1,itol=0.5,min_snr=3,min_ridge=3,fst=0.4,eval=FALSE) 
+@
+
+\section{Alignment}
+Align PICs across samples.
+<<alignment>>=
+st <- PIAlign(st,mzSegSize=1)
+@
+
+\section{Grouping}
+Grouping the features. Including grouping the isotopic ions and adducts with the main features and grouping main features across samples.
+<<group>>=
+gp <- PICgroup(st)
+@
+
+\section{Generate the peak matrix}
+Summarize extracted information into a data matrix.
+<<getDataMatrix>>=
+ma <- getDataMatrix(gp,std='maxo')
+@
+
+\section{Filling missing peaks}
+Fill missing peaks based on EIBPC.
+<<fill peaks>>=
+fp <- fillPeaks(ma)
+@
+
+\section{Pattern recognition}
+Finding the difference between two class. PLS-DA is used for the example.
+<<Pattern recognition>>=
+x <- pretreat(fp)
+y <- as.factor(c(rep('wt',6),rep('ko',6)))
+opt <- peak.analyst.plsda(x,y,ncomp=7)
+@
+
+\end{document}
