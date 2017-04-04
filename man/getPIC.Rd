@@ -8,21 +8,19 @@ Extracting the pure ion chromatograms via Optimal K-means Clustering
 Return a list which is comprised of PICs and the main information of them.
 }
 \usage{
-getPIC(filename, range = 10, level = 500, alpha = 1, itol = 0.5, min_snr = 3, min_ridge = 3, fst = 0.3, missp = 5)
+getPIC(filename, roi_ppm = 30, level = 500, alpha = 1, itol = 0.5, min_snr = 3, min_ridge = 3, fst = 0.3, missp = 5)
 }
 \arguments{
   \item{filename}{
 char, path of the LC-MS data file to read, can be.mzXML, .CDF, .mzdata, .mzml, etc
 }
-  \item{range}{
-numeric, the range of retention time of ROI to be clursted
+  \item{roi_ppm}{
+numeric, the m/z range of ROI to be clursted
 }
   \item{level}{
 numeric, the minimum intensity of a feature, i.e. the minimum intensity of the landmark ion to be considered
 }
-  \item{alpha}{
-numeric, the adjustment factor of ROI in m/z direction
-}
+
   \item{itol}{
 numeric, the relative tolerence between the intensity of ion signal and the estimated intensity. it could be Inf if estimated intensity is not used.
 }

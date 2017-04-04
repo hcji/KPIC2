@@ -6,7 +6,7 @@ setClass("KPICSet", representation(peakmat="matrix",
                                    path="character"))
 
 KPICset <-
-  function(files,range=30,level=500,alpha=1,itol=0.5,min_snr=3,min_ridge=3,fst=0.3,missp=5,eval=TRUE){
+  function(files,roi_ppm=30,level=500,itol=0.5,min_snr=3,min_ridge=3,fst=0.3,missp=5,eval=TRUE){
     library(parallel)
     library(iterators)
     library(foreach)
@@ -28,7 +28,7 @@ KPICset <-
     registerDoParallel(cl)
     
     result <- foreach(i=1:length(listed)) %dopar%
-      getPIC(listed[i],range=range,level=level,alpha=alpha,itol=itol,min_snr=min_snr,min_ridge=min_ridge,fst=fst,missp=missp)
+      getPIC(listed[i],roi_ppm=30,level=500,itol=0.5,min_snr=3,min_ridge=3,fst=0.3,missp=5)
     
     if (eval){
       peakmat <- foreach(i=1:length(listed)) %dopar%

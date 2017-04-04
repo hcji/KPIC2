@@ -234,7 +234,7 @@ signal_noise_ratio <- function(cwt2d, ridges, peaks){
   return(list(snr=snr,signals=signals,scales=scales))
 }
 
-peaks_detection <- function(vec, min_snr=3, min_ridge=5){
+peaks_detection <- function(vec, min_snr=3, min_ridge=5, missp=3){
   if (length(vec)<10){
     return(NULL)
   }
@@ -250,8 +250,8 @@ peaks_detection <- function(vec, min_snr=3, min_ridge=5){
   r_snr <- signal_noise_ratio(cwt2d, ridges, peaks)
   snr <- r_snr$snr
   scales <- r_snr$scales
-  peak.limits <- c(5,length(vec)-5)
-  hit <- which(snr>=min_snr&scales<length(vec)&peaks>peak.limits[1]&peaks<peak.limits[2])
+  peaks.limits <- c(missp,length(vec)-missp)
+  hit <- which(snr>=min_snr&scales<length(vec)&peaks>peaks.limits[1]&peaks<peaks.limits[2])
   peaks <- peaks[hit]
   snr <- snr[hit]
   scales <- scales[hit]

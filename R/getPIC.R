@@ -62,7 +62,7 @@ LoadData <- function(filename)
   return(list(Mat=Mat,spectrum=spectrum,times=times))
 }
 
-getPIC = function(filename,range=30,level=500,alpha=1,itol=0.5,min_snr=3,min_ridge=3,fst=0.3,missp=5){
+getPIC = function(filename,roi_ppm=30,level=500,itol=0.5,min_snr=3,min_ridge=3,fst=0.3,missp=5){
   library(Rcpp)
   library(stats)
   library(Ckmeans.1d.dp)
@@ -78,26 +78,17 @@ getPIC = function(filename,range=30,level=500,alpha=1,itol=0.5,min_snr=3,min_rid
   mat <- mat[order(mat[,'inte'],decreasing=T),]
   refs <- findInterval(c(-level),-mat[,'inte'])
   
-  # calculate roi range
-  mzdiff <- diff(sort(mat[,'mz']))
-  Dens <- density(mzdiff,kernel="gaussian",n=length(mzdiff)/5000,na.rm=T)
-  reff <- mean(Dens$y)+sd(Dens$y)
-  num <- which(Dens$y>reff)
-  gap <- Dens$x[num[length(num)]]
-  if (gap<=0) {gap <- 0.001}
-  tInl <- rtlist[2]-rtlist[1]
-  scanranges <- round(range/tInl)
-  mzrange <- alpha*scanranges*gap
-  
   for (i in 1:refs) {
     ref.scan <- mat[i,'scans']
     ref.index <- mat[i,'index']
     ref.inte <- spectrum[[ref.scan]][ref.index,2]
     ref.mz <- spectrum[[ref.scan]][ref.index,1]
+    if (length(ref.inte)<1){next}
     if (ref.inte<level){next}
+    mzrange <- ref.mz*roi_ppm/1000000
     
     # set range of roi
-    roi.scans <- c(max(1,ref.scan-scanranges),min(ref.scan+scanranges,length(rtlist)))
+    roi.scans <- c(1,length(rtlist))
     roi.mzs <- c(ref.mz-mzrange,ref.mz+mzrange)
     roi.mat <- NULL
     roi.inds <-NULL
@@ -170,7 +161,7 @@ getPIC = function(filename,range=30,level=500,alpha=1,itol=0.5,min_snr=3,min_rid
       fore.intensi <- max(0,at+bt)
       
       this.scan <- which(select.ind[,1]==scan)
-      if (length(scan)>0){
+      if (length(this.scan)>0){
         intensi <- select.mat[this.scan,2]
         err.intensi <- (intensi-fore.intensi)/fore.intensi
         if (min(abs(err.intensi))<itol|min(err.intensi)<0) {
@@ -207,7 +198,7 @@ getPIC = function(filename,range=30,level=500,alpha=1,itol=0.5,min_snr=3,min_rid
       fore.intensi <- max(0,at+bt)
       
       this.scan <- which(select.ind[,1]==scan)
-      if (length(scan)>0){
+      if (length(this.scan)>0){
         intensi <- select.mat[this.scan,2]
         err.intensi <- (intensi-fore.intensi)/fore.intensi
         if (min(abs(err.intensi))<itol|min(err.intensi)<0) {
@@ -237,7 +228,7 @@ getPIC = function(filename,range=30,level=500,alpha=1,itol=0.5,min_snr=3,min_rid
     PIC.scans <- PIC.scans[ll[1]:ll[length(ll)]]
     
     # peak detection
-    r_peak_detection <- peaks_detection(PIC.intensi,min_snr,min_ridge)
+    r_peak_detection <- peaks_detection(PIC.intensi,min_snr,min_ridge,missp)
     mainPeak <- which(r_peak_detection$signal==max(r_peak_detection$signal))[1]
     if (length(r_peak_detection$peakIndex)==0){
       next
