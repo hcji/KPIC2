@@ -6,7 +6,7 @@ setClass("KPICSet", representation(peakmat="matrix",
                                    path="character"))
 
 KPICset <-
-  function(files,roi_ppm=30,level=500,itol=0.5,min_snr=3,min_ridge=3,fst=0.3,missp=5,eval=TRUE){
+  function(files,roi_range=0.1,level=500,itol=c(-0.5,0.3),min_snr=3,peakwidth=c(5,60),min_ridge=3,fst=0.3,missp=5,cluster.ref="square",eval=TRUE){
     library(parallel)
     library(iterators)
     library(foreach)
@@ -28,7 +28,7 @@ KPICset <-
     registerDoParallel(cl)
     
     result <- foreach(i=1:length(listed)) %dopar%
-      getPIC(listed[i],roi_ppm=30,level=500,itol=0.5,min_snr=3,min_ridge=3,fst=0.3,missp=5)
+      getPIC(listed[i],roi_range,level,itol,min_snr,peakwidth,min_ridge,fst,missp,cluster.ref)
     
     if (eval){
       peakmat <- foreach(i=1:length(listed)) %dopar%
@@ -65,7 +65,7 @@ PIAlign <- function(xset,mzSegSize=.5,shift=10,lambda=1.5,ref=NA){
   lambda <- max(0,lambda)
   path <- xset@path
   if (is.na(ref)){
-    TICs <- getTIC(path,method='TIC',Ref=TRUE)
+    TICs <- getTIC(path,Ref=TRUE)
     ref <- TICs$ref
   }
   peakmat <- xset@peakmat
@@ -84,20 +84,20 @@ PIAlign <- function(xset,mzSegSize=.5,shift=10,lambda=1.5,ref=NA){
   return(xset)
 }
 
-getTIC <- function(path,method='TIC',Ref=TRUE)
+getTIC <- function(path,Ref=TRUE)
 {
-  TICs <- lapply(path,function(path){
-      data <- LoadData(path)
-      inte <- rep(0,length(data$times))
-      for (j in 1:length(data$times)){
-        if (method=='TIC'){
-          inte[j] <- sum(data$spectrum[[j]][,2])
-        }else if (method=='BPC'){
-          inte[j] <- max(data$spectrum[[j]][,2])
-        }
-      }
-      return(inte)
-    })
+  library(KPIC)
+  library(parallel)
+  cl <- makeCluster(getOption("cl.cores", detectCores(logical=FALSE)))
+  TICs <- parLapply(cl,path,function(path){
+    data <- KPIC::LoadData(path)
+    inte <- rep(0,length(data$times))
+    for (j in 1:length(data$times)){
+      inte[j] <- sum(data$spectrum[[j]][,2])
+    }
+    return(inte)
+  })
+  stopCluster(cl)
   ref <- NA
   if (Ref){
     scans <- 10^6

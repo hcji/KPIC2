@@ -1,11 +1,11 @@
 pretreat <- function(r_fillpeaks,normalization='sum',scaling='auto scaling'){
   dat <- t(r_fillpeaks$data.mat)
   colnames(dat) <- paste('mz:',round(r_fillpeaks$features[,'mz'],2),';','rt:',round(r_fillpeaks$features[,'rt'],1))
-  if (normalization=='sum'){
+  if (is.null(normalization)){
+    dat <- dat
+  }else if (normalization=='sum'){
     total <- rowSums(dat)
     dat <- dat / matrix(total,nrow(dat),ncol(dat))
-  } else if (normalization==NULL){
-    dat <- dat
   }else{
     dat <- dat / matrix(dat[,normalization],nrow(dat),ncol(dat))
   }

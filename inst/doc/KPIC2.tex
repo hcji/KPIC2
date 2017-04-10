@@ -19,17 +19,17 @@
 KPIC2 is an effective platform for LC-MS based metabolomics using pure ion chromatograms, which is developed for metabolomics studies. KPIC2 can detect pure ions accurately, align PICs across samples, group PICs to annotate isotope and adduct PICs, fill missing peaks and pattern recognition. High-resolution mass spectrometers like TOF and Orbitrap are more suitable.
 
 \section{Raw Data File Preparation}
-The \Rpackage{KPIC} package readspackage reads full-scan LC/MS data from mzXML and mzData files.
+The \Rpackage{KPIC} package reads full-scan LC/MS data from mzXML and mzData files.
 \begin{Schunk}
 \begin{Sinput}
 > library(KPIC)
 \end{Sinput}
 \end{Schunk}
-In the user guide, faahKO dataset is taken as example, though the data is not high-resolution. The files are obtained from the \Rpackage{faahKO}
+In the user guide, an example dataset is taken as example, which is different concentraction of standard compounds solution mixed with plasma extraction.
 \begin{Schunk}
 \begin{Sinput}
 > library(faahKO)
-> path <- system.file("CDF", package = "faahKO")
+> path <- 'E:/LC-MS data/example'
 \end{Sinput}
 \end{Schunk}
 
@@ -37,77 +37,4 @@ In the user guide, faahKO dataset is taken as example, though the data is not hi
 Extract pure ion chromatograms via optimized K-means clustering of ions in region of interest, and detect peaks of PICs
 \begin{Schunk}
 \begin{Sinput}
-> st <- KPICset(path,range=20,level=5000,alpha=1,itol=0.5,min_snr=3,min_ridge=3,fst=0.4,eval=FALSE) 
-\end{Sinput}
-\end{Schunk}
-
-\section{Alignment}
-Align PICs across samples.
-\begin{Schunk}
-\begin{Sinput}
-> st <- PIAlign(st)
-\end{Sinput}
-\begin{Soutput}
-3 %  is done 
-5 %  is done 
-8 %  is done 
-10 %  is done 
-13 %  is done 
-15 %  is done 
-18 %  is done 
-20 %  is done 
-23 %  is done 
-25 %  is done 
-28 %  is done 
-30 %  is done 
-33 %  is done 
-35 %  is done 
-38 %  is done 
-40 %  is done 
-43 %  is done 
-45 %  is done 
-48 %  is done 
-50 %  is done 
-53 %  is done 
-55 %  is done 
-58 %  is done 
-60 %  is done 
-63 %  is done 
-65 %  is done 
-68 %  is done 
-70 %  is done 
-73 %  is done 
-75 %  is done 
-78 %  is done 
-80 %  is done 
-83 %  is done 
-85 %  is done 
-88 %  is done 
-90 %  is done 
-93 %  is done 
-95 %  is done 
-98 %  is done 
-\end{Soutput}
-\end{Schunk}
-
-\section{Grouping}
-Grouping the features. Including grouping the isotopic ions and adducts with the main features and grouping main features across samples.
-\begin{Schunk}
-\begin{Sinput}
-> gp <- PICgroup(st)
-\end{Sinput}
-\end{Schunk}
-
-\section{Generate the peak matrix}
-Summarize extracted information into a data matrix.
-\begin{Schunk}
-\begin{Sinput}
-> ma <- getDataMatrix(gp,std='maxo')
-\end{Sinput}
-\end{Schunk}
-
-\section{Filling missing peaks}
-Fill missing peaks based on EIBPC.
-\begin{Schunk}
-\begin{Sinput}
-> fp <- fillPeaks(ma)
+> st <- KPICset(path,roi_range=0.2,level=70000) 

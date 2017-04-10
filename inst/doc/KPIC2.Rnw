@@ -18,20 +18,21 @@
 KPIC2 is an effective platform for LC-MS based metabolomics using pure ion chromatograms, which is developed for metabolomics studies. KPIC2 can detect pure ions accurately, align PICs across samples, group PICs to annotate isotope and adduct PICs, fill missing peaks and pattern recognition. High-resolution mass spectrometers like TOF and Orbitrap are more suitable.
 
 \section{Raw Data File Preparation}
-The \Rpackage{KPIC} package readspackage reads full-scan LC/MS data from mzXML and mzData files.
+The \Rpackage{KPIC} package reads full-scan LC/MS data from mzXML and mzData files.
 <<LoadLib>>=
 library(KPIC)
 @
-In the user guide, faahKO dataset is taken as example, though the data is not high-resolution. The files are obtained from the \Rpackage{faahKO}
+In the user guide, an example dataset is used, which is different concentraction of standard compounds solution mixed with plasma extraction.
 <<LoadData>>=
 library(faahKO)
-path <- system.file("CDF", package = "faahKO")
+path <- 'E:/LC-MS data/example'
 @
 
 \section{Extraction of Pure Ion Chromatograms}
 Extract pure ion chromatograms via optimized K-means clustering of ions in region of interest, and detect peaks of PICs
 <<Extracing PICs>>=
-st <- KPICset(path,range=20,level=5000,alpha=1,itol=0.5,min_snr=3,min_ridge=3,fst=0.4,eval=FALSE) 
+st <- KPICset(path,roi_range=0.2,level=70000) 
+head(st)
 @
 
 \section{Alignment}
@@ -62,7 +63,7 @@ fp <- fillPeaks(ma)
 Finding the difference between two class. PLS-DA is used for the example.
 <<Pattern recognition>>=
 x <- pretreat(fp)
-y <- as.factor(c(rep('wt',6),rep('ko',6)))
+y <- as.factor(c(rep('group1',6),rep('group2',6)))
 opt <- peak.analyst.plsda(x,y,ncomp=7)
 @
 

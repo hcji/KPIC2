@@ -8,24 +8,27 @@ Extracting the pure ion chromatograms via Optimal K-means Clustering
 Return a list which is comprised of PICs and the main information of them.
 }
 \usage{
-getPIC(filename, roi_ppm = 30, level = 500, alpha = 1, itol = 0.5, min_snr = 3, min_ridge = 3, fst = 0.3, missp = 5)
+getPIC(filename, roi_range = 0.1, level = 500, itol = c(-0.5, 0.3), min_snr = 3, peakwidth = c(5, 60),
+        min_ridge =  3, fst = 0.3, missp = 5, cluster.ref = "square")
 }
 \arguments{
   \item{filename}{
 char, path of the LC-MS data file to read, can be.mzXML, .CDF, .mzdata, .mzml, etc
 }
-  \item{roi_ppm}{
+  \item{roi_range}{
 numeric, the m/z range of ROI to be clursted
 }
   \item{level}{
 numeric, the minimum intensity of a feature, i.e. the minimum intensity of the landmark ion to be considered
 }
-
   \item{itol}{
-numeric, the relative tolerence between the intensity of ion signal and the estimated intensity. it could be Inf if estimated intensity is not used.
+the relative tolerence between the intensity of ion signal and the estimated intensity, given as range (min,max). it could be Inf if estimated intensity is not used.
 }
   \item{min_snr}{
 numeric, the minimum SNR used for peak detection
+}
+  \item{peakwidth}{
+Chromatographic peak width, given as range (min,max) in seconds
 }
   \item{min_ridge}{
 numeric, the minimum scale of peaks
@@ -36,8 +39,8 @@ numeric, the parameter for intensity forcasting via exponential smoothing.
   \item{missp}{
 numeric, number of missing point allowed in a PIC.
 }
-  \item{eval}{
-logistic, whether to evaluate the peak shape or not.
+  \item{cluster.ref}{
+the reference of clustering, 'absolute' or 'square'.
 }
 }
 

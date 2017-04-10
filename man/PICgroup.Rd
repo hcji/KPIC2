@@ -8,23 +8,20 @@ group the features
 group the features across samples
 }
 \usage{
-PICgroup(xset, beta = 0.8, group.width = 15, ppm = 80, min_CoP = 0.9)
+PICgroup(xset,tolerance=c(0.01,10),weight=c(0.7,0.2,0.1),frac=0.5)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{xset}{
 a KPIC object after alignment
 }
-  \item{beta}{
-numeric, a factor of group width, which is calculated by beta*FWHM of base feature.
+  \item{tolerance}{
+numeric, maximum allowed absolute m/z and RT difference
 }
-  \item{group.width}{
-numeric, the width of each group. if NULL, it will be calculated by beta; if given, the beta is invalid.
+  \item{weight}{
+numeric,  the assigned weight for m/z, RT and intensity difference at the moment of match score calculation between peaks.
 }
-  \item{ppm}{
-the tolerance of m/z of features belonging to the same group
-}
-  \item{min_CoP}{
-the minimum coefficient between peaks and the base feature, which are regarded as isotopes or adducts.
+  \item{frac}{
+minimum fraction of samples necessary in at least one of the sample groups.
 }
 }

@@ -1,81 +1,158 @@
-PICgroup <- function(xset, beta=0.8, group.width=15, ppm=80, min_CoP=0.9){
-  peakmat <- xset@peakmat
-  min_samples <- round(0.7*max(peakmat[,'sample']))
-  group_id <- rep(0,nrow(peakmat))
-  peakmat <- cbind(peakmat,group_id)
-  peakmat <- peakmat[order(peakmat[,'rt_cor']),]
-  intensi_order <- order(peakmat[,'maxo'],decreasing=T)
-  
-  pseudospecturm <- list()
+PICgroup <- function(xset,tolerance=c(0.01,10),weight=c(0.7,0.2,0.1),method='dbscan',frac=0.5){
+  library(dbscan)
   groups <- list()
-  data.mat <- c()
-  group_rts <- c()
-  group_ind <- 1
-  for (i in 1:length(intensi_order)){
-    base.feature <- intensi_order[i]
-    if (peakmat[base.feature,'group_id']!=0){next}
-    if (is.null(group.width)){
-      FWHM <- max(0.1,0.58875*(peakmat[base.feature,'rtmax']-peakmat[base.feature,'rtmin']))
-      group.width <- beta*FWHM
-    }
-    candi.feature <- findInterval(c(peakmat[base.feature,'rt_cor']-group.width,peakmat[base.feature,'rt_cor']+group.width),peakmat[,'rt_cor'])
-    candi.feature <- (candi.feature[1]+1):candi.feature[2]
-    candi.feature <- candi.feature[peakmat[candi.feature,'group_id']==0]
-    candi.mz <- peakmat[candi.feature,'mz']
-    candi.mz.order <- order(candi.mz)
-    candi.mzdiff <- 1000000*diff(candi.mz[candi.mz.order])/candi.mz[candi.mz.order][1:(length(candi.mz.order)-1)]
-    b.points <- which(candi.mzdiff>ppm)
-    b.points <- candi.mz[candi.mz.order][b.points+1]
-    candi.clu <- 1+findInterval(candi.mz,b.points)
-    main.feature <- 1+findInterval(peakmat[base.feature,'mz'],b.points)
-    feature.num <- table(candi.clu)
-    hits <- which(feature.num>min_samples)
-    if ((!main.feature%in%hits)|length(hits)<2) {
-      peakmat[candi.feature[candi.clu%in%main.feature],'group_id'] <- group_ind
-      group_ind <- group_ind+1
-      groups <- c(groups,list(candi.feature[candi.clu==main.feature]))
-      group_rts <- c(group_rts, peakmat[base.feature,'rt_cor'])
-      next
-    }
-    candi.feature <- candi.feature[candi.clu%in%hits]
-    candi.clu <- candi.clu[candi.clu%in%hits]
-    rt.range <- c(min(peakmat[candi.feature,'rtmin']),max(peakmat[candi.feature,'rtmax']))
-    rtlist <- seq(rt.range[1],rt.range[2],xset@rt[[1]][2]-xset@rt[[1]][1])
-    PIC.matrix <- list()
-    for (clu in hits) {
-      this.PIC.matrix <- matrix(0,length(xset@path),length(rtlist))
-      this.clu <- candi.feature[candi.clu%in%clu]
-      this.sample <- unique(peakmat[this.clu,'sample'])
-      for (sam in this.sample) {
-        this.peak <- this.clu[peakmat[this.clu,'sample']==sam]
-        this.peak <- this.peak[peakmat[this.peak,'maxo']==max(peakmat[this.peak,'maxo'])][1]
-        this.index <- peakmat[this.peak,'index']
-        this.PIC <- xset@PICset[[sam]]$PICs[[this.index]]
-        this.PIC.matrix[sam,] <- approx(this.PIC[,1],this.PIC[,2],rtlist)$y
+  features <- NULL
+  min_samples <- round(frac*length(xset@PICset))
+  peakmat <- xset@peakmat[order(xset@peakmat[,'mz']),]
+  group_id <- rep(0,nrow(peakmat))
+  peakmat <- cbind(1:nrow(peakmat),peakmat,group_id)
+  inds <- order(-peakmat[,'maxo'])
+  group.id <- 1
+  for(i in inds){
+    if (peakmat[i,'group_id']!=0) {next}
+    group.i <- c()
+    mzrange <- c(peakmat[i,'mz']-tolerance[1],peakmat[i,'mz']+tolerance[1])
+    rtrange <- c(peakmat[i,'rt_cor']-tolerance[2],peakmat[i,'rt_cor']+tolerance[2])
+    candidates <- findInterval(mzrange,peakmat[,'mz'])
+    candidates <- (candidates[1]+1):candidates[2]
+    candidates <- candidates[peakmat[candidates,'group_id']==0]
+    candidates <- candidates[peakmat[candidates,'rt_cor']>=rtrange[1]&peakmat[candidates,'rt_cor']<=rtrange[2]]
+    ref <- which(candidates==i)
+    if (length(candidates)>=min_samples){
+      candidates <- peakmat[candidates,]
+    } else {peakmat[candidates,'group_id'] <- -1
+    next}
+    if (method=='score'){
+      scores <- (1-abs(candidates[,'mz']-peakmat[i,'mz'])/tolerance[1])*weight[1] +
+        (1-abs(candidates[,'rt_cor']-peakmat[i,'rt_cor'])/tolerance[2])*weight[2] +
+        (1-abs(candidates[,'maxo']-peakmat[i,'maxo'])/peakmat[i,'maxo'])*weight[3]
+      candidates <- cbind(candidates,scores)
+      for(j in 1:length(xset@PICset)){
+        sample.j <- candidates[candidates[,'sample']==j,]
+        if (length(sample.j)==0){
+          next
+        } else if (!is.null(nrow(sample.j))){
+          hit.j <- which(sample.j[,'scores']==max(sample.j[,'scores']))[1]
+          group.i <- c(group.i,sample.j[hit.j,1])
+          peakmat[sample.j[hit.j,1],'group_id'] <- group.id
+        } else {
+          group.i <- c(group.i,sample.j[1])
+          peakmat[sample.j[1],'group_id'] <- group.id
+        }
       }
-      this.PIC.matrix[is.na(this.PIC.matrix)] <- 0
-      PIC.matrix <- c(PIC.matrix,list(this.PIC.matrix))
+    } else if (method=='dbscan'){
+      scores <- data.frame(abs(candidates[,'mz']-peakmat[i,'mz'])/tolerance[1]*weight[1],
+                           abs(candidates[,'rt_cor']-peakmat[i,'rt_cor'])/tolerance[2]*weight[2])
+      r.dbscan <- hdbscan(scores,minPts=min_samples)
+      ref.clu <- r.dbscan$cluster[ref]
+      if (ref.clu==0&sum(r.dbscan$cluster)!=0){
+        peakmat[i,'group_id']<- -1
+        next}
+      hits <- which(r.dbscan$cluster==ref.clu)
+      
+      for(j in 1:length(xset@PICset)){
+        sample.j <- which(candidates[hits,'sample']==j)
+        sample.j <- candidates[hits[sample.j],]
+        if (length(sample.j)==0){
+          next
+        } else if (!is.null(nrow(sample.j))){
+          hit.j <- which(sample.j[,'maxo']==max(sample.j[,'maxo']))[1]
+          group.i <- c(group.i,sample.j[hit.j,1])
+          peakmat[sample.j[hit.j,1],'group_id'] <- group.id
+        } else {
+          group.i <- c(group.i,sample.j[1])
+          peakmat[sample.j[1],'group_id'] <- group.id
+        }
+      }
+      if (length(group.i)!=length(unique(peakmat[group.i,'sample']))){stop()}
     }
     
-    coeffs <- rep(0,length(hits))
-    reff.clu <- which(hits==main.feature)
-    for (j in 1:length(PIC.matrix)) {
-      coeffs[j] <- mat.cor(PIC.matrix[[reff.clu]],PIC.matrix[[j]])
-    }
-    select.clu <- hits[coeffs>min_CoP]
-    peakmat[candi.feature[candi.clu%in%select.clu],'group_id'] <- group_ind
-    group_ind <- group_ind+1
-    this.groups <- list(candi.feature[candi.clu%in%main.feature])
-    if (length(select.clu)>1){
-      for (s.clu in setdiff(select.clu,main.feature)) {
-        this.groups <- c(this.groups,list(candi.feature[candi.clu%in%s.clu]))
-      }
-    }
-    groups <- c(groups,list(this.groups))
-    group_rts <- c(group_rts, peakmat[base.feature,'rt_cor'])
+    if (length(group.i)<min_samples){next}
+    groups <- c(groups,list(group.i))
+    feature.i <- c(mean(peakmat[group.i,'mz']),mean(peakmat[group.i,'rt_cor']),max(peakmat[group.i,'maxo']))
+    features <- rbind(features,feature.i)
+    group.id <- group.id+1
   }
-  xset@peakmat <- peakmat
-  return(list(groups=groups,group.rts=group_rts,xset=xset))
+  colnames(features) <- c('mz','rt','maxo')
+  rownames(features) <- NULL
+  xset@peakmat <- peakmat[,c(2:(ncol(peakmat)-1))]
+  return(list(features=features,groups=groups,xset=xset))
+}
+
+groupCombine <- function(r.group,min_corr=0.9,type='tailed',window=10){
+  groups <- r.group$groups
+  features <- r.group$features
+  xset <- r.group$xset
+  group_id <- rep(0,nrow(features))
+  features <- cbind(features,group_id)
+  
+  inds <- order(features[,'rt'])
+  features <- features[inds,]
+  groups <- groups[inds]
+  combined.groups <- list()
+  combined.features <- NULL
+  
+  inds <- order(-features[,'maxo'])
+  group_id <- 1
+  for(i in inds){
+    if (features[i,'group_id']!=0){next}
+    
+    rtrange <- c(features[i,'rt']-window,features[i,'rt']+window)
+    if (type=='tailed'){
+      mzrange <- c(features[i,'mz'],features[i,'mz']+0.05)
+    } else if (type=='isotope'){
+      mzrange <- c(features[i,'mz'],features[i,'mz']+1.033*5+0.05)
+    } else {
+      mzrange <- c(0,Inf)
+    }
+    
+    candidates <- findInterval(rtrange,features[,'rt'])
+    candidates <- (candidates[1]+1):candidates[2]
+    candidates <- candidates[features[candidates,'group_id']==0]
+    candidates <- candidates[features[candidates,'mz']>=mzrange[1]&features[candidates,'mz']<=mzrange[2]]
+    main_feature <- which(candidates==i)
+    if (length(candidates)>1){
+      PIC.matrix <- list()
+      temp <- unlist(groups[candidates])
+      this.rt <- c(min(xset@peakmat[temp,'rtmin']-0.5*window),max(xset@peakmat[temp,'rtmax'])+0.5*window)
+      this.rt <- xset@rt[[1]][xset@rt[[1]]>=this.rt[1]&xset@rt[[1]]<=this.rt[2]]
+      for (j in 1:length(candidates)){
+        this.matrix <- matrix(0,length(xset@path),length(this.rt))
+        this.peaks <- xset@peakmat[groups[[candidates[j]]],]
+        for (k in 1:length(xset@path)){
+          this.peak <- this.peaks[this.peaks[,'sample']==k,1]
+          if (length(this.peak)>0){
+            this.PIC <- xset@PICset[[k]]$PICs[[this.peak]]
+          } else {next}
+          temp.rt <- this.rt[this.rt>=this.PIC[1,1]&this.rt<=this.PIC[nrow(this.PIC),1]]
+          this.PIC.y <- approx(this.PIC[,1],this.PIC[,2],temp.rt)$y
+          this.matrix[k,which(this.rt%in%temp.rt)] <- this.PIC.y
+        }
+        PIC.matrix <- c(PIC.matrix,list(this.matrix))
+      }
+      coeffs <- rep(0,length(candidates))
+      for (kk in 1:length(PIC.matrix)) {
+        coeffs[kk] <- mat.cor(PIC.matrix[[main_feature]],PIC.matrix[[kk]])
+      }
+      hits <- candidates[coeffs>=min_corr]
+      features[hits,'group_id'] <- group_id
+      if (type=='tailed'){
+        combined.groups <- c(combined.groups, list(groups[i]))
+      } else {
+        combined.groups <- c(combined.groups, list(groups[c(i,setdiff(hits,i))]))
+      }
+      combined.features <- rbind(combined.features,features[i,])
+      group_id <- group_id + 1
+    }else{
+      features[i,'group_id'] <- group_id
+      combined.groups <- c(combined.groups, groups[i])
+      combined.features <- rbind(combined.features,features[i,])
+      group_id <- group_id + 1
+    }
+  }
+  groups <- combined.groups
+  features <- combined.features
+  return(list(features=features,groups=groups,xset=xset))
 }
 
 getPseudospecturm <- function(r.group,index,std='maxo') {
@@ -105,7 +182,6 @@ getPseudospecturm <- function(r.group,index,std='maxo') {
   stem(Pseudospecturm[,1],Pseudospecturm[,2])
   return(Pseudospecturm)
 }
-
 mat.cor <- function(A,B){
   a <- A-mean(A)
   b <- B-mean(B)

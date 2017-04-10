@@ -250,7 +250,7 @@ peaks_detection <- function(vec, min_snr=3, min_ridge=5, missp=3){
   r_snr <- signal_noise_ratio(cwt2d, ridges, peaks)
   snr <- r_snr$snr
   scales <- r_snr$scales
-  peaks.limits <- c(missp,length(vec)-missp)
+  peaks.limits <- c(missp+2,length(vec)-missp-2)
   hit <- which(snr>=min_snr&scales<length(vec)&peaks>peaks.limits[1]&peaks<peaks.limits[2])
   peaks <- peaks[hit]
   snr <- snr[hit]
