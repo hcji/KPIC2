@@ -6,7 +6,7 @@ setClass("KPICSet", representation(peakmat="matrix",
                                    path="character"))
 
 KPICset <-
-  function(files,roi_range=0.1,level=500,itol=c(-0.5,0.3),min_snr=3,peakwidth=c(5,60),min_ridge=3,fst=0.3,missp=5,cluster.ref="square",eval=TRUE){
+  function(files,roi_range=0.1,level=500,itol=c(-1,1),min_snr=3,peakwidth=c(5,60),min_ridge=3,fst=0.3,missp=5,cluster.ref="square",eval=TRUE){
     library(parallel)
     library(iterators)
     library(foreach)

@@ -8,7 +8,7 @@ Extracting the pure ion chromatograms for a set of samples
 Return a KPICset object
 }
 \usage{
-KPICset(files, roi_range = 0.1, level = 500, itol = c(-0.5, 0.3), min_snr = 3, peakwidth = c(5, 60),
+KPICset(files, roi_range = 0.1, level = 500, itol = c(-1, 1), min_snr = 3, peakwidth = c(5, 60),
         min_ridge =  3, fst = 0.3, missp = 5, cluster.ref = "square", eval = TRUE)
 }
 %- maybe also 'usage' for other objects documented here.

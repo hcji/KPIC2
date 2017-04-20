@@ -62,7 +62,7 @@ LoadData <- function(filename)
   return(list(Mat=Mat,spectrum=spectrum,times=times))
 }
 
-getPIC = function(filename,roi_range=0.1,level=500,itol=c(-0.5,0.3),min_snr=3,peakwidth=c(5,60),min_ridge=3,fst=0.3,missp=5,cluster.ref='square'){
+getPIC = function(filename,roi_range=0.1,level=500,itol=c(-1,1),min_snr=3,peakwidth=c(5,60),min_ridge=3,fst=0.3,missp=5,cluster.ref='square'){
   library(Rcpp)
   library(stats)
   library(Ckmeans.1d.dp)

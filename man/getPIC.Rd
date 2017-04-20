@@ -8,7 +8,7 @@ Extracting the pure ion chromatograms via Optimal K-means Clustering
 Return a list which is comprised of PICs and the main information of them.
 }
 \usage{
-getPIC(filename, roi_range = 0.1, level = 500, itol = c(-0.5, 0.3), min_snr = 3, peakwidth = c(5, 60),
+getPIC(filename, roi_range = 0.1, level = 500, itol = c(-1, 1), min_snr = 3, peakwidth = c(5, 60),
         min_ridge =  3, fst = 0.3, missp = 5, cluster.ref = "square")
 }
 \arguments{

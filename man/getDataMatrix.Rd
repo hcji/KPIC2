@@ -8,7 +8,7 @@ Generate data matrix.
 Extract all information from an KPIC object. Returns a peaklist.
 }
 \usage{
-getDataMatrix(r.group, std = "maxo", min_samples = NULL)
+getDataMatrix(r.group, std = "maxo", frac=0.56)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -18,7 +18,7 @@ the result of grouping step
   \item{std}{
 The standard for quantification, which could be 'maxo','peak_area'.
 }
-  \item{min_samples}{
-the minimum number of samples which contain the same feature. 
+  \item{frac}{
+the minimum fraction of samples which contain the same feature. 
 }
 }

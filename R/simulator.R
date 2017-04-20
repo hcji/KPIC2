@@ -1,3 +1,5 @@
+## the code of simulated dataset
+
 simulator <-  function(ground_truth,noise_file,output_file,width=c(10,50),height=c(10,10000),snratio=Inf,noise.level=0,ppm=0){
   library(readr)
   library(caMassClass)

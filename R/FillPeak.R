@@ -85,7 +85,7 @@ fillPeaks.peakfinder <- function(r.DataMatrix,tolerance=c(0.1,15),weight=c(0.7,0
               (1-abs(candidates[ids,'rt']-features[inds[i,1],'rt'])/tolerance[2])*weight[2] +
               (1-abs(candidates[ids,'maxo']-features[inds[i,1],'maxo'])/features[inds[i,1],'maxo'])*weight[3]
     ids <- ids[which(scores==max(scores))[1]]
-    data.mat[inds[1],inds[2]] <- candidates[ids,std]
+    data.mat[inds[i,1],inds[i,2]] <- candidates[ids,std]
   }
   return(list(features=features,data.mat=data.mat,r.group=r.group))
 }
