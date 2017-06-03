@@ -41,7 +41,7 @@ cwtft = function(sig)
   
   psift <- waveft(omega,scales)
   mat <- matrix(0,NbSc+2,length(f))
-  for (ii in 1:NbSc){
+  for (ii in 1:NbSc+2){
     mat[ii,] <- f
   }
   cwtcfs <- t(mvfft(t(mat*psift),inverse = TRUE)/ncol(mat))

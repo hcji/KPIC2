@@ -40,9 +40,6 @@ numeric, the parameter for intensity forcasting via exponential smoothing.
   \item{missp}{
 numeric, number of missing point allowed in a PIC.
 }
-  \item{cluster.ref}{
-the reference of clustering, 'absolute' or 'square'.
-}
   \item{eval}{
 logistic, whether to evaluate the peak shape or not.
 }

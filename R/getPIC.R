@@ -62,7 +62,7 @@ LoadData <- function(filename)
   return(list(Mat=Mat,spectrum=spectrum,times=times))
 }
 
-getPIC = function(filename,roi_range=0.1,level=500,itol=c(-1,1),min_snr=3,peakwidth=c(5,60),min_ridge=3,fst=0.3,missp=5,cluster.ref='square'){
+getPIC = function(filename,roi_range=0.1,level=500,itol=c(-1,1),min_snr=3,peakwidth=c(5,60),min_ridge=3,fst=0.3,missp=5){
   library(Rcpp)
   library(stats)
   library(Ckmeans.1d.dp)
@@ -141,8 +141,7 @@ getPIC = function(filename,roi_range=0.1,level=500,itol=c(-1,1),min_snr=3,peakwi
       next}
     
     # calculate m/z difference
-    if (cluster.ref=='absolute') {mzdiff <- abs(roi.mat[,1]-ref.mz)}
-    if (cluster.ref=='square') {mzdiff <- (roi.mat[,1]-ref.mz)^2}
+    mzdiff <- (roi.mat[,1]-ref.mz)^2
     
     # kmeans cluster
     r_kmeans <- Ckmeans.1d.dp(mzdiff, k=c(1,5))
