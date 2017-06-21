@@ -36,12 +36,11 @@ cwtft = function(sig)
   s0 <- dt
   ds <- 0.2
   NbSc <- floor(log2(n)/ds)
-  scales <- s0*2^(-2:(NbSc-1)*ds)
-  param <- 2
+  scales <- c(1,s0*2^(-2:(NbSc-3)*ds))
   
   psift <- waveft(omega,scales)
-  mat <- matrix(0,NbSc+2,length(f))
-  for (ii in 1:NbSc+2){
+  mat <- matrix(0,NbSc+1,length(f))
+  for (ii in 1:(NbSc+1)){
     mat[ii,] <- f
   }
   cwtcfs <- t(mvfft(t(mat*psift),inverse = TRUE)/ncol(mat))
@@ -129,7 +128,7 @@ ridge_detection <- function(local_max, row_best, col, n_rows, n_cols){
   return(list(rows=rows,cols=cols))
 }
 
-peaks_position <- function(vec, ridges, cwt2d, min_ridge=5){
+peaks_position <- function(vec, ridges, cwt2d){
   n_cols <- ncol(cwt2d)
   negs <- cwt2d < 0
   local_minus <- local_extreme(cwt2d,'min')
@@ -149,7 +148,8 @@ peaks_position <- function(vec, ridges, cwt2d, min_ridge=5){
     inds <- which(temp>0)
     if (length(inds)>0){
       y <- ridge[[2]][inds]
-      col <- round(mean(as.numeric(names(table(y))[table(y)==max(table(y))])))
+      tb <- table(y)
+      col <- round(mean(as.numeric(names(tb)[which.max(tb)])))
       rows <- ridge[[1]][(ridge[[2]] == col)]
       row <- rows[1]
       cols_start <- max(col-which(negs[row, 0:col][seq(col,1,-1)]),0)
@@ -168,39 +168,7 @@ peaks_position <- function(vec, ridges, cwt2d, min_ridge=5){
       }
     }
   }
-  
-  ridges_len <- c()
-  for (k in 1:length(peaks)){
-    ridges_len <- c(ridges_len,length(ridges_select[[k]][[2]]))
-  }
-  del <- which(ridges_len<min_ridge)
-  if (length(del)>0){
-    ridges_refine <- ridges_select[-del]
-    peaks_refine <- peaks[-del]
-  }else{
-    ridges_refine <- ridges_select
-    peaks_refine <- peaks
-  }
-  # ridges_refine <- c()
-  # peaks_refine <- c()
-  # ridges_len <- c()
-  # for (k in 1:length(peaks)){
-  #   ridges_len <- c(ridges_len,length(ridges_select[[k]][[2]]))
-  # }
-  # for (peak in unique(peaks)) {
-  #   inds <- which(peaks == peak)
-  #   ridge <- ridges_select[inds[which(ridges_len[inds]==max(ridges_len[inds]))]]
-  #   temp <- seq(peak-wnd,peak+wnd,1)
-  #   temp[temp<1] <- 1
-  #   temp[temp>length(vec)] <- length(vec)
-  #   inds <- temp
-  #   inds <- inds[-which(inds==peak)]
-  #  if (min(vec[peak]) > max(vec[inds])){
-  #     ridges_refine <- c(ridges_refine,ridge)
-  #     peaks_refine <- c(peaks_refine,peak)
-  #   }
-  # }
-  return(list(peaks_refine=peaks_refine, ridges_refine=ridges_refine))
+  return(list(peaks=peaks, ridges=ridges_select))
 }
 
 signal_noise_ratio <- function(cwt2d, ridges, peaks){
@@ -220,7 +188,7 @@ signal_noise_ratio <- function(cwt2d, ridges, peaks){
     val <- peaks[ind]
     hf_window <- length(ridges[[ind]][[2]])* 1
     win <- seq(max(c(val-hf_window, 0)),min(c(val+hf_window, n_cols)),1)
-    noises[ind] <- as.numeric(quantile(abs(row_one[win]),0.8))
+    noises[ind] <- as.numeric(quantile(abs(row_one[win]),0.95))
     for (i in 1:length(ridges[[ind]][[1]])){
       a <- ridges[[ind]][[1]][i]
       b <- ridges[[ind]][[2]][i]
@@ -234,7 +202,7 @@ signal_noise_ratio <- function(cwt2d, ridges, peaks){
   return(list(snr=snr,signals=signals,scales=scales))
 }
 
-peaks_detection <- function(vec, min_snr=3, min_ridge=5, missp=3){
+peaks_detection <- function(vec, min_snr, level=0, misspoint=0){
   if (length(vec)<10){
     return(NULL)
   }
@@ -243,18 +211,25 @@ peaks_detection <- function(vec, min_snr=3, min_ridge=5, missp=3){
   if (length(ridges)==0){
     return(NULL)
   }
-  r_peaks <- peaks_position(vec, ridges, cwt2d, min_ridge)
-  peaks <- r_peaks$peaks_refine
-  ridges <- r_peaks$ridges_refine
+  r_peaks <- peaks_position(vec, ridges, cwt2d)
+  peaks <- r_peaks$peaks
+  ridges <- r_peaks$ridges
   if (length(peaks)==0){return(NULL)}
   r_snr <- signal_noise_ratio(cwt2d, ridges, peaks)
   snr <- r_snr$snr
   scales <- r_snr$scales
-  peaks.limits <- c(missp+2,length(vec)-missp-2)
-  hit <- which(snr>=min_snr&scales<length(vec)&peaks>peaks.limits[1]&peaks<peaks.limits[2])
+  signals <- vec[peaks]
+  peaks.limits <- c(misspoint+2,length(vec)-misspoint-2)
+  
+  # refine peaks
+  limit1 <- which(snr>min_snr&signals>level)
+  limit2 <- which(peaks>peaks.limits[1]&peaks<peaks.limits[2])
+  hit <- intersect(limit2,limit1)
+  
   peaks <- peaks[hit]
   snr <- snr[hit]
   scales <- scales[hit]
-  signals <- vec[peaks]
+  signals <- signals[hit]
+  
   return(list(peakIndex=peaks,snr=snr,signals=signals,peakScale=scales))
 }

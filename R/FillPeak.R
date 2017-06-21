@@ -35,7 +35,7 @@ s.fillpeaks <- function(vec,path,mzranges,rtranges,features,min_snr,min_ridge,st
   data <- LoadData(path)
   for (j in missed) {
     this.bpc <- getBPC(data,mzranges[j,],rtranges[j,])
-    r_peak_detection <- peaks_detection(this.bpc[,2],min_snr,min_ridge)
+    r_peak_detection <- peaks_detection(this.bpc[,2],min_snr)
     if (length(r_peak_detection$peakIndex)==0){
       filled <- c(filled,0)
       next
@@ -47,20 +47,11 @@ s.fillpeaks <- function(vec,path,mzranges,rtranges,features,min_snr,min_ridge,st
       mainPeak <- which(r_peak_detection$signal==max(r_peak_detection$signal))[1]
     }
     
-    r_widthEstimation <- widthEstimationCWT(this.bpc[,2],r_peak_detection)
-    
-    if (std=='signal'){
-      signal <- r_peak_detection$signals[mainPeak]
-      filled <- c(filled,signal)
-    } else if (std=='maxo'){
-      scans_ind <- r_widthEstimation$peakIndexLower[mainPeak]:r_widthEstimation$peakIndexUpper[mainPeak]
-      maxo <- max(this.bpc[scans_ind,2])
+    if (std=='maxo'){
+      maxo <- max(this.bpc)
       filled <- c(filled,maxo)
-    } else if (std=='peak_area'){
-      scans_ind <- r_widthEstimation$peakIndexLower[mainPeak]:r_widthEstimation$peakIndexUpper[mainPeak]
-      peak_area <- integration(this.bpc[scans_ind,1],this.bpc[scans_ind,2])
-      filled <- c(filled,peak_area)
     }
+    
   }
   return(list(missed=missed,filled=filled))
 }

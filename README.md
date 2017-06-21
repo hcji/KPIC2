@@ -6,9 +6,9 @@
 
 ### Install Depends: 
 
-    install.packages(c("devtools","Rcpp","Ckmeans.1d.dp","foreach","doParallel","iterators","randomForest", "forecast", "pracma", "caret", "ellipse", "splancs", "ggplot2", "gtools"))
+    install.packages(c("devtools","Rcpp","Ckmeans.1d.dp","foreach","doParallel","iterators","randomForest", "pracma", "caret", "ellipse", "splancs", "ggplot2", "gtools"))
     source("https://bioconductor.org/biocLite.R")
-    biocLite("mzR","ropls")
+    biocLite(c("mzR","ropls"))
 		
 install "kopls" package from kopls_1.1.2.zip, which is embodied in KPIC2/inst
 ### Install KPIC2:  

@@ -1,5 +1,5 @@
-\name{fillPeaks}
-\alias{fillPeaks}
+\name{fillPeaks.EIBPC}
+\alias{fillPeaks.EIBPC}
 
 \title{
 identify missing peaks
@@ -28,7 +28,7 @@ The minimum SNR of filled peak, which may be smaller than that of getPIC functio
 The minimum scale of peaks, which may be smaller than that of getPIC function
 }
   \item{std}{
-The standard for quantification, which could be 'maxo','peak_area'.
+The standard for quantification, only 'maxo' is supported now.
 }
   \item{peak}{
 The standard for miss peak searching of EIBPC, which could be 'nearest','highest'.

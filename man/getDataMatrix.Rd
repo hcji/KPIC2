@@ -16,7 +16,7 @@ getDataMatrix(r.group, std = "maxo", frac=0.56)
 the result of grouping step
 }
   \item{std}{
-The standard for quantification, which could be 'maxo','peak_area'.
+The standard for quantification, only 'maxo' is supported now.
 }
   \item{frac}{
 the minimum fraction of samples which contain the same feature. 
