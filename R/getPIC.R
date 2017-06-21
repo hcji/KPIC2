@@ -1,71 +1,159 @@
 LoadData <- function(filename)
 {
   library(mzR)
-  splitname<-strsplit(filename,"\\.")[[1]]
+  splitname <- strsplit(filename,"\\.")[[1]]
   if(tolower(splitname[length(splitname)]) == "cdf")
   {
-    mz.conn<-openMSfile(filename,backend="netCDF")
+    msobj <- openMSfile(filename,backend="netCDF")
   }else{
-    mz.conn<-openMSfile(filename)
+    msobj <- openMSfile(filename)
   }
   
-  masses<-NULL
-  intensi<-NULL
-  labels<-NULL
-  index<-NULL
-  spectrum<-list()
-  b<-header(mz.conn)$retentionTime
+  peakInfo <- peaks(msobj)
+  headerInfo <- header(msobj)
+  whMS1 <- which(headerInfo$msLevel==1)
+  peakInfo <- peakInfo[whMS1]
   
-  segs<-seq(0, length(b), by=200)
-  if((length(b) %% 200) != 0) segs<-c(segs, length(b))
+  peakInfo <- lapply(peakInfo, function(spectrum) {
+    keep <- spectrum[,2] > 1e-6
+    output <- as.data.frame(spectrum[keep,,drop = FALSE])
+    colnames(output) <- c('mz','intensity')
+    return(output)
+  })
   
-  for(n in 2:length(segs))
-  {
-    a<-mzR::peaks(mz.conn, scans=(segs[n-1]+1):segs[n])
-    if (length(a)<1) {next}
-    this.masses<-NULL
-    this.intensi<-NULL
-    this.labels<-NULL
-    this.index<-NULL
-    this.spectrum<-NULL
-    for(i in 1:length(a))
-    {
-      this.a<-a[[i]]
-      if (length(this.a)<1) {
-        this.spectrum<-c(this.spectrum,list(this.a))
-        next}
-      if (!is.null(nrow(this.a)))
-      {
-        this.a<-this.a[this.a[,2]>1e-10,]
-        if(is.null(nrow(this.a))) this.a<-matrix(this.a, nrow=1)
-        this.masses<-c(this.masses, this.a[,1])
-        this.intensi<-c(this.intensi, this.a[,2])
-        this.labels<-c(this.labels, rep(segs[n-1]+i,nrow(this.a)))
-        this.index<- c(this.index,1:length(this.a[,1]))
-        this.spectrum<-c(this.spectrum,list(this.a))
-      }else{
-        b[segs[n-1]+i]<-NA
-      }
-    }
-    
-    masses<-c(masses, this.masses)
-    intensi<-c(intensi, this.intensi)
-    labels<-c(labels, this.labels)
-    index<-c(index, this.index)
-    spectrum<-c(spectrum,this.spectrum)
-  }
-  times<-b[!is.na(b)]
-  close(mz.conn)
-  Mat<-cbind(labels,index,masses,intensi)
-  colnames(Mat)<-c('scans','index','mz','inte')
+  peakNum <- unlist(lapply(peakInfo,nrow))
+  index <- unlist(lapply(peakNum,function(PN){1:PN}))
+  scans <- unlist(lapply(1:length(peakNum),function(s){rep(s,peakNum[s])}))
+  Mat <- cbind(scans,index, do.call(rbind,peakInfo))
   
-  return(list(Mat=Mat,spectrum=spectrum,times=times))
+  scanTime <- headerInfo$retentionTime[whMS1]
+  close(msobj)
+
+  return(list(Mat=Mat,spectrum=peakInfo,times=scanTime))
 }
 
-getPIC = function(filename,roi_range=0.1,level=500,itol=c(-1,1),min_snr=3,peakwidth=c(5,60),min_ridge=3,fst=0.3,missp=5){
-  library(Rcpp)
-  library(stats)
+locateROI <- function(spectrum,ref.scan,roi.scans,roi.mzs,missp){
+  roi.mat <- list()
+  roi.inds <- list()
+  roi.scans <- roi.scans[1]:roi.scans[2]
+  p <- match(ref.scan,roi.scans)
+  # left direction
+  b <- 0
+  for (s in p:1){
+    if (b>missp){break}
+    scan <- roi.scans[s]
+    inc <- findInterval(roi.mzs,spectrum[[scan]][,1])
+    if (inc[2]<=inc[1]){
+      b <- b+1
+      next}
+    inc <- (inc[1]+1):inc[2]
+    inc <- inc[spectrum[[scan]][inc,2]>0]
+    if (length(inc)<1) {
+      b <- b+1
+      next
+    } # check if used
+    scan.inds <- cbind(rep(scan,length(inc)),inc)
+    scan.mat <- spectrum[[scan]][inc,]
+    roi.mat[[s]] <- scan.mat
+    roi.inds[[s]] <- scan.inds
+    b <- 0
+  }
+
+  # right direction
+  b <- 0
+  for (s in p:length(roi.scans)){
+    if (b>missp){break}
+    scan <- roi.scans[s]
+    inc <- findInterval(roi.mzs,spectrum[[scan]][,1])
+    if (inc[2]<=inc[1]){
+      b <- b+1
+      next}
+    inc <- (inc[1]+1):inc[2]
+    inc <- inc[spectrum[[scan]][inc,2]>0]
+    if (length(inc)<1) {
+      b <- b+1
+      next
+    } # check if used
+    scan.inds <- cbind(rep(scan,length(inc)),inc)
+    scan.mat <- spectrum[[scan]][inc,]
+    roi.mat[[s]] <- scan.mat
+    roi.inds[[s]] <- scan.inds
+    b <- 0
+  }
+  
+  roi.mat <- do.call(rbind,roi.mat)
+  roi.inds <- do.call(rbind,roi.inds)
+  roi.scans <- c(roi.inds[1,1],roi.inds[nrow(roi.inds),1])
+  return(list(roi.scans=roi.scans, roi.inds=roi.inds, roi.mat=roi.mat))
+}
+
+ionRefine <- function(PIC.scans,ref.scan,ref.inte,select.ind,select.mat,spectrum,fst){
+  PIC.intensi <- rep(0,length(PIC.scans))
+  start.point <- which(PIC.scans==ref.scan)
+  # right side
+  S1 <- S2 <- ref.inte
+  for (j in start.point:length(PIC.scans)){
+    scan <- PIC.scans[j]
+    # 2' exponential smoothing forecast
+    tt <- length(S1)
+    w <- fst
+    at <- 2*S1[tt]-S2[tt]
+    bt <- w/(1-w)*(S1[tt]-S2[tt])
+    fore.intensi <- max(0,at+bt)
+    
+    this.scan <- which(select.ind[,1]==scan)
+    if (length(this.scan)>1){
+      intensi <- select.mat[this.scan,2]
+      p <- this.scan[which.min(abs(intensi-fore.intensi))]
+      PIC.intensi[j] <- select.mat[p,2]
+      spectrum[[select.ind[p,1]]][select.ind[p,2],2] <- 0
+    } else if(length(this.scan)==1){
+      p <- this.scan
+      PIC.intensi[j] <- select.mat[p,2]
+      spectrum[[select.ind[p,1]]][select.ind[p,2],2] <- 0
+    }else{
+      PIC.intensi[j] <- fore.intensi
+    }
+    # 2' exponential smoothing
+    S1 <- c(S1,w*PIC.intensi[j]+(1-w)*S1[tt])
+    S2 <- c(S2,w*S1[tt+1]+(1-w)*S2[tt])
+  }
+  
+  # right side
+  S1 <- S2 <- ref.inte
+  for (j in start.point:1){
+    scan <- PIC.scans[j]
+    # 2' exponential smoothing forecast
+    tt <- length(S1)
+    w <- fst
+    at <- 2*S1[tt]-S2[tt]
+    bt <- w/(1-w)*(S1[tt]-S2[tt])
+    fore.intensi <- max(0,at+bt)
+    
+    this.scan <- which(select.ind[,1]==scan)
+    if (length(this.scan)>1){
+      intensi <- select.mat[this.scan,2]
+      p <- this.scan[which.min(abs(intensi-fore.intensi))]
+      PIC.intensi[j] <- select.mat[p,2]
+      spectrum[[select.ind[p,1]]][select.ind[p,2],2] <- 0
+    } else if(length(this.scan)==1){
+      p <- this.scan
+      PIC.intensi[j] <- select.mat[p,2]
+      spectrum[[select.ind[p,1]]][select.ind[p,2],2] <- 0
+    }else{
+      PIC.intensi[j] <- fore.intensi
+    }
+    # 2' exponential smoothing
+    S1 <- c(S1,w*PIC.intensi[j]+(1-w)*S1[tt])
+    S2 <- c(S2,w*S1[tt+1]+(1-w)*S2[tt])
+  }
+  
+  return(list(spectrum=spectrum,PIC.scans=PIC.scans,PIC.intensi=PIC.intensi))
+}
+
+getPIC = function(filename,roi_range=0.1,level=500,min_snr=3,peakwidth=c(5,60),fst=0.3,missp=5){
   library(Ckmeans.1d.dp)
+  library(data.table)
   # prepare output
   PICs <- list()
   Info <- NULL
@@ -74,15 +162,19 @@ getPIC = function(filename,roi_range=0.1,level=500,itol=c(-1,1),min_snr=3,peakwi
   mat <- data$Mat
   rtlist <- data$times
   spectrum <- data$spectrum
-  mat <- mat[order(mat[,'inte'],decreasing=T),]
-  refs <- findInterval(c(-level),-mat[,'inte'])
+  rm(data)
+  
   min_width <- round(peakwidth[1]/(rtlist[2]-rtlist[1]))
   max_width <- round(peakwidth[2]/(rtlist[2]-rtlist[1])/2)
   mzrange <- roi_range/2
   
-  for (i in 1:refs) {
-    ref.scan <- mat[i,'scans']
-    ref.index <- mat[i,'index']
+  # set seeds
+  mat <- mat[mat[,'intensity']>=level,]
+  mat <- mat[order(mat[,'intensity']),]
+
+  for (i in 1:nrow(mat)) {
+    ref.scan <- as.numeric(mat[i,'scans'])
+    ref.index <- as.numeric(mat[i,'index'])
     ref.inte <- spectrum[[ref.scan]][ref.index,2]
     ref.mz <- spectrum[[ref.scan]][ref.index,1]
     if (length(ref.inte)<1){next}
@@ -90,52 +182,18 @@ getPIC = function(filename,roi_range=0.1,level=500,itol=c(-1,1),min_snr=3,peakwi
 
     # set range of roi
     roi.scans <- c(max(1,ref.scan-max_width),min(length(rtlist),ref.scan+max_width))
-      # roi.scans <- c(1,length(rtlist))
     roi.mzs <- c(ref.mz-mzrange,ref.mz+mzrange)
     roi.mat <- NULL
     roi.inds <-NULL
     
     # locate roi
-    b <- 0
-    for (scan in ref.scan:roi.scans[1]){
-      if (b>missp){break}
-      s <- findInterval(roi.mzs,spectrum[[scan]][,1])
-      if ((s[1]+1)>s[2]){
-        b <- b+1
-        next}
-      s <- (s[1]+1):s[2]
-      s <- s[spectrum[[scan]][s,2]>0]
-      if (length(s)<1) {
-        b <- b+1
-        next
-      } # check if used
-      scan.inds <- cbind(rep(scan,length(s)),s)
-      scan.mat <- spectrum[[scan]][s,]
-      roi.mat <- rbind(roi.mat,scan.mat)
-      roi.inds <- rbind(roi.inds,scan.inds)
-      b <- 0
-    }
-    roi.scans[1] <- scan.inds[1]
-    b <- 0
-    for (scan in ref.scan:roi.scans[2]){
-      if (b>missp){break}
-      s <- findInterval(roi.mzs,spectrum[[scan]][,1])
-      if ((s[1]+1)>s[2]){
-        b <- b+1
-        next}
-      s <- (s[1]+1):s[2]
-      s <- s[spectrum[[scan]][s,2]>0]
-      if (length(s)<1) {
-        b <- b+1
-        next
-      }
-      scan.inds <- cbind(rep(scan,length(s)),s)
-      scan.mat <- spectrum[[scan]][s,]
-      roi.mat <- rbind(roi.mat,scan.mat)
-      roi.inds <- rbind(roi.inds,scan.inds)
-      b <- 0
-    }
-    roi.scans[2] <- scan.inds[1]
+    roi <- locateROI(spectrum,ref.scan,roi.scans,roi.mzs,missp)
+    roi.scans <- roi$roi.scans
+    roi.inds <- roi$roi.inds
+    roi.mat <- roi$roi.mat
+    rm(roi)
+    
+    # check roi length
     if (roi.scans[2]-roi.scans[1]<min_width){
       spectrum[[ref.scan]][ref.index,2] <- 0
       next}
@@ -147,101 +205,22 @@ getPIC = function(filename,roi_range=0.1,level=500,itol=c(-1,1),min_snr=3,peakwi
     r_kmeans <- Ckmeans.1d.dp(mzdiff, k=c(1,5))
     mincenter <- min(r_kmeans$centers)
     tClu <- which(r_kmeans$centers==mincenter)
-    select.ind <- which(r_kmeans$cluster==tClu)
-    select.mat <- roi.mat[select.ind,]
-    select.ind <- roi.inds[select.ind,]
+    sel <- which(r_kmeans$cluster==tClu)
+    if (length(sel)<min_width){next}
+    select.mat <- roi.mat[sel,]
+    select.ind <- roi.inds[sel,]
     
     # refine by exponential smoothing forecasting
     PIC.scans <- roi.scans[1]:roi.scans[2]
-    PIC.intensi <- rep(0,length(PIC.scans))
-    start.point <- which(PIC.scans==ref.scan)
-      # right side
-    S1 <- S2 <- ref.inte
-    miss.n <- 0
-    for (j in start.point:length(PIC.scans)){
-      if (miss.n>missp) {break}
-      scan <- PIC.scans[j]
-      
-      # 2' exponential smoothing forecast
-      tt <- length(S1)
-      w <- fst
-      at <- 2*S1[tt]-S2[tt]
-      bt <- w/(1-w)*(S1[tt]-S2[tt])
-      fore.intensi <- max(0,at+bt)
-      
-      this.scan <- which(select.ind[,1]==scan)
-      if (length(this.scan)>0){
-        intensi <- select.mat[this.scan,2]
-        err.intensi <- (intensi-fore.intensi)/apply(rbind(fore.intensi,intensi),2,max)
-        num <- which(err.intensi>itol[1]&err.intensi<itol[2])
-        if (length(num)>0) {
-          miss.n <- 0
-          num <- num[abs(err.intensi[num])==min(abs(err.intensi[num]))][1]
-          this.scan <- this.scan[num]
-          PIC.intensi[j] <- select.mat[this.scan,2]
-          # remove the select ion from raw spectrum
-          spectrum[[select.ind[this.scan,1]]][select.ind[this.scan,2],2] <- 0
-        } else {
-          PIC.intensi[j] <- fore.intensi
-          miss.n <- miss.n+1
-        }
-      } else {
-        PIC.intensi[j] <- fore.intensi
-        miss.n <- miss.n+1
-      }
-      # 2' exponential smoothing
-      S1 <- c(S1,w*PIC.intensi[j]+(1-w)*S1[tt])
-      S2 <- c(S2,w*S1[tt+1]+(1-w)*S2[tt])
-    }
-      # left side
-    S1 <- S2 <- ref.inte
-    miss.n <- 0
-    for (j in start.point:1){
-      if (miss.n>missp) {break}
-      scan <- PIC.scans[j]
-      
-      # 2' exponential smoothing forecast
-      tt <- length(S1)
-      w <- fst
-      at <- 2*S1[tt]-S2[tt]
-      bt <- w/(1-w)*(S1[tt]-S2[tt])
-      fore.intensi <- max(0,at+bt)
-      
-      this.scan <- which(select.ind[,1]==scan)
-      if (length(this.scan)>0){
-        intensi <- select.mat[this.scan,2]
-        err.intensi <- (intensi-fore.intensi)/apply(rbind(fore.intensi,intensi),2,max)
-        num <- which(err.intensi>itol[1]&err.intensi<itol[2])
-        if (length(num)>0) {
-          miss.n <- 0
-          num <- num[abs(err.intensi[num])==min(abs(err.intensi[num]))][1]
-          this.scan <- this.scan[num]
-          PIC.intensi[j] <- select.mat[this.scan,2]
-          # remove the select ion from raw spectrum
-          spectrum[[select.ind[this.scan,1]]][select.ind[this.scan,2],2] <- 0
-        } else {
-          PIC.intensi[j] <- fore.intensi
-          miss.n <- miss.n+1
-        }
-      } else {
-        PIC.intensi[j] <- fore.intensi
-        miss.n <- miss.n+1
-      }
-      # 2' exponential smoothing
-      S1 <- c(S1,w*PIC.intensi[j]+(1-w)*S1[tt])
-      S2 <- c(S2,w*S1[tt+1]+(1-w)*S2[tt])
-    }
-    
-    # remove where intensity less than zero
-    ll <- which(PIC.intensi>10^-6)
-    if (ll[length(ll)]-ll[1]<10) {next}
-    PIC.intensi <- PIC.intensi[ll[1]:ll[length(ll)]]
-    PIC.scans <- PIC.scans[ll[1]:ll[length(ll)]]
-    if (length(PIC.scans)<min_width) {next}
+    pic <- ionRefine(PIC.scans,ref.scan,ref.inte,select.ind,select.mat,spectrum,fst)
+    spectrum <- pic$spectrum
+    PIC.scans <- pic$PIC.scans
+    PIC.intensi <- pic$PIC.intensi
+    rm(pic)
     
     # peak detection
-    r_peak_detection <- peaks_detection(PIC.intensi,min_snr,min_ridge,missp)
-    mainPeak <- which(r_peak_detection$signal==max(r_peak_detection$signal))[1]
+    r_peak_detection <- peaks_detection(PIC.intensi,min_snr,level,missp)
+    mainPeak <- which.max(r_peak_detection$signal)
     if (length(r_peak_detection$peakIndex)==0){
       next
     }
@@ -252,13 +231,9 @@ getPIC = function(filename,roi_range=0.1,level=500,itol=c(-1,1),min_snr=3,peakwi
     # collect infomation of PIC
     peak_rt <- rtlist[PIC.scans[r_peak_detection$peakIndex[mainPeak]]]
     peak_snr <- r_peak_detection$snr[mainPeak]
-    peak_signals <- r_peak_detection$signals[mainPeak]
     peak_scale <- r_peak_detection$peakScale[mainPeak]
-    r_widthEstimation <- widthEstimationCWT(PIC.intensi,r_peak_detection)
-    scans_ind <- r_widthEstimation$peakIndexLower[mainPeak]:r_widthEstimation$peakIndexUpper[mainPeak]
-    rtmin <- rtlist[PIC.scans[r_widthEstimation$peakIndexLower[mainPeak]]]
-    rtmax <- rtlist[PIC.scans[r_widthEstimation$peakIndexUpper[mainPeak]]]
-    r_peakArea <- integration(rtlist[PIC.scans[scans_ind]],PIC.intensi[scans_ind])
+    rtmin <- rtlist[PIC.scans[1]]
+    rtmax <- rtlist[PIC.scans[length(PIC.scans)]]
     mz_rsd <- sd(select.mat[,1])/mean(select.mat[,1])*1000000
     
     output <- c(ref.mz,
@@ -268,21 +243,19 @@ getPIC = function(filename,roi_range=0.1,level=500,itol=c(-1,1),min_snr=3,peakwi
                 rtmin,
                 rtmax,
                 max(PIC.intensi),
-                peak_signals,
-                r_peakArea,
                 peak_snr,
                 peak_scale,
                 mz_rsd)
     # output PIC.i
     Info <- rbind(Info,output)
-      # print(output)
     PIC.i <- cbind(rtlist[PIC.scans],PIC.intensi)
     colnames(PIC.i) <- c('rt','intensity')
     PICs <- c(PICs,list(PIC.i))
   }
-  colnames(Info) <-  c("mz","mzmin","mzmax","rt","rtmin","rtmax","maxo","signal","peak_area","snr","scale","mz_rsd")
+  colnames(Info) <-  c("mz","mzmin","mzmax","rt","rtmin","rtmax","maxo","snr","scale","rsd")
   index <- 1:nrow(Info)
   Info <- cbind(index,Info)
+  gc()
   return(list(Info=Info,PICs=PICs,rt=rtlist))
 }
 

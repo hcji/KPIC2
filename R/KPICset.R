@@ -6,13 +6,13 @@ setClass("KPICSet", representation(peakmat="matrix",
                                    path="character"))
 
 KPICset <-
-  function(files,roi_range=0.1,level=500,itol=c(-1,1),min_snr=3,peakwidth=c(5,60),min_ridge=3,fst=0.3,missp=5,eval=TRUE){
+  function(files,roi_range=0.1,level=500,min_snr=3,peakwidth=c(5,60),min_ridge=3,fst=0.3,missp=5,eval=TRUE){
     library(parallel)
     library(iterators)
     library(foreach)
     library(doParallel)
     library(Ckmeans.1d.dp)
-    library(compiler)
+    library(data.table)
     library(KPIC)
     output <- new("KPICSet")
     filepattern <- c("[Cc][Dd][Ff]", "[Nn][Cc]", "([Mm][Zz])?[Xx][Mm][Ll]",
@@ -28,7 +28,7 @@ KPICset <-
     registerDoParallel(cl)
     
     result <- foreach(i=1:length(listed)) %dopar%
-      getPIC(listed[i],roi_range,level,itol,min_snr,peakwidth,min_ridge,fst,missp)
+      getPIC(listed[i],roi_range,level,min_snr,peakwidth,fst,missp)
     
     if (eval){
       peakmat <- foreach(i=1:length(listed)) %dopar%
