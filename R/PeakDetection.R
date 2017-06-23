@@ -202,6 +202,7 @@ signal_noise_ratio <- function(cwt2d, ridges, peaks){
   return(list(snr=snr,signals=signals,scales=scales))
 }
 
+
 peaks_detection <- function(vec, min_snr, level=0, misspoint=0){
   if (length(vec)<10){
     return(NULL)
