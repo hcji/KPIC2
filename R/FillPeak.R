@@ -47,8 +47,11 @@ s.fillpeaks <- function(vec,path,mzranges,rtranges,features,min_snr,min_ridge,st
       mainPeak <- which(r_peak_detection$signal==max(r_peak_detection$signal))[1]
     }
     
+    r_widthEstimation <- widthEstimationCWT(this.bpc[,2],r_peak_detection)
+    
     if (std=='maxo'){
-      maxo <- max(this.bpc)
+      scans_ind <- r_widthEstimation$peakIndexLower[mainPeak]:r_widthEstimation$peakIndexUpper[mainPeak]
+      maxo <- max(this.bpc[scans_ind,2])
       filled <- c(filled,maxo)
     }
     

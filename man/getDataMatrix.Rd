@@ -8,7 +8,7 @@ Generate data matrix.
 Extract all information from an KPIC object. Returns a peaklist.
 }
 \usage{
-getDataMatrix(r.group, std = "maxo", frac=0.56)
+getDataMatrix(r.group, std = "maxo")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
