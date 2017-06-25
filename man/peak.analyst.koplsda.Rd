@@ -3,7 +3,7 @@
 \alias{peak.analyst.koplsda}
 \title{peak.analyst.koplsda}
 \usage{
-peak.analyst.oplsda(X,Y,A,oax,opt='GS',nrcvouter=20,nrcvinner=10,permutation=50,kernelParams=c(1,30,29))
+peak.analyst.koplsda(X,Y,A,oax,opt='GS',nrcvouter=20,nrcvinner=10,permutation=50,kernelParams=c(1,30,29))
 }
 
 \arguments{

@@ -18,7 +18,4 @@ the result of grouping step
   \item{std}{
 The standard for quantification, only 'maxo' is supported now.
 }
-  \item{frac}{
-the minimum fraction of samples which contain the same feature. 
-}
 }

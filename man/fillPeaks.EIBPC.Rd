@@ -8,15 +8,12 @@ identify missing peaks
 For each sample, identify missing peaks resulting from peak detection or other steps. The EIBPC is used to achieve this aim.
 }
 \usage{
-fillPeaks(r.DataMatrix,tolerance=c(0.1,15),min_snr=3,min_ridge=2,std='maxo',peak='highest')
+fillPeaks.EIBPC(r.DataMatrix,tolerance=c(0.1,15),min_snr=3,min_ridge=2,std='maxo',peak='highest')
 }
 
 \arguments{
   \item{r.DataMatrix}{
 The result of \code{getDataMatrix} function
-}
-  \item{xset}{
-A KPIC object
 }
   \item{tolerance}{
 The tolerance of filled peaks: c(m/z difference, rt difference)

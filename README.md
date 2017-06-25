@@ -57,7 +57,7 @@ install "kopls" package from kopls_1.1.2.zip, which is embodied in KPIC2/inst
   After grouping, there always be peak groups that do not in-clude peaks from every sample. The cause of missing peaks mean does lies on that the peak does not exit. It may be caused by undetection or misalignment. The miss peak filling includes two steps. First, it extends the tolerance of both m/z and RT dimensions, and research from peak list of each sam-ple. Second, if there are still missing peaks, it allows feature searching from the raw data directly.
 
     r.fillpeaks <- fillPeaks.peakfinder(data.mat,tolerance=c(0.25,25),weight=c(0.7,0.3,0.2))
-    r.fillpeaks <- fillPeaks.EIBPC(r.fillpeaks,tolerance=c(0.25,25),min_snr=3,min_ridge=2)
+    r.fillpeaks <- fillPeaks.EIBPC(r.fillpeaks,tolerance=c(0.25,25),min_snr=3)
     
 ### Pattern recognition:
   Finding the difference between two class. PLS-DA is used for the example.

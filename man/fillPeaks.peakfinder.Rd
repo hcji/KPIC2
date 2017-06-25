@@ -8,7 +8,7 @@ identify missing peaks
 For each sample, fill missing peaks through find peaks form KPICset. 
 }
 \usage{
-fillPeaks(r.DataMatrix,tolerance=c(0.1,15),weight=c(0.7,0.2,0.1),std='maxo')
+fillPeaks.peakfinder(r.DataMatrix,tolerance=c(0.1,15),weight=c(0.7,0.2,0.1),std='maxo')
 }
 
 \arguments{
