@@ -6,7 +6,7 @@ waveft = function(omega,scales)
   cfsNORM <- sqrt(StpFrq)*SqrtNbFrq
   NbSc <- length(scales)
   wft <- matrix(0,NbSc,NbFrq)
-  
+
   mul <- sqrt(scales/gamma(2+0.5))*cfsNORM
   for (jj in 1:NbSc){
     scapowered = (scales[jj]*omega)
@@ -26,18 +26,18 @@ cwtft = function(sig)
   xx <- val-meanSIG
   n <- length(xx)
   dt <- 2
-  
+
   omega <- (1:floor(n/2))
   omega <- omega*((2*pi)/(n*dt))
   omega <- c(0, omega,-(omega[seq(floor((n-1)/2),1,-1)]))
   f <- fft(xx)
-  
+
   # set scales
   s0 <- dt
   ds <- 0.2
   NbSc <- floor(log2(n)/ds)
   scales <- c(1,s0*2^(-2:(NbSc-3)*ds))
-  
+
   psift <- waveft(omega,scales)
   mat <- matrix(0,NbSc+1,length(f))
   for (ii in 1:(NbSc+1)){
@@ -108,6 +108,8 @@ ridge_detection <- function(local_max, row_best, col, n_rows, n_cols){
     segment_minus <- 1
     if (row_minus>0 && segment_minus<col_minus && col_minus<n_cols-segment_minus-1){
       if (local_max[row_minus, col_minus + 1]){col_minus <- col_minus+1
+      }else if(local_max[row_minus, col_minus + 2]){col_minus <- col_minus+2
+      }else if(local_max[row_minus, col_minus - 2]){col_minus <- col_minus-2
       }else if(local_max[row_minus, col_minus - 1]){col_minus <- col_minus-1
       }else if(local_max[row_minus, col_minus]){col_minus <- col_minus
       }else{col_minus <- -1}
@@ -117,6 +119,8 @@ ridge_detection <- function(local_max, row_best, col, n_rows, n_cols){
     }
     if (row_plus<n_rows && segment_plus<col_plus && col_plus<n_cols-segment_plus-1){
       if (local_max[row_plus, col_plus + 1]){col_plus <- col_plus+1
+      }else if(local_max[row_plus, col_plus + 2]){col_plus <- col_plus+2
+      }else if(local_max[row_plus, col_plus - 2]){col_plus <- col_plus-2
       }else if(local_max[row_plus, col_plus - 1]){col_plus <- col_plus-1
       }else if(local_max[row_plus, col_plus]){col_plus <- col_plus
       }else{col_plus <- -1}
@@ -174,10 +178,6 @@ peaks_position <- function(vec, ridges, cwt2d){
 signal_noise_ratio <- function(cwt2d, ridges, peaks){
   n_cols <- ncol(cwt2d)
   row_one <- row_one_del <- cwt2d[1,]
-  del <- which(abs(row_one) < 10e-5)
-  if (length(del)>0){
-    row_one_del <- row_one[-del]
-  }
   t <- 3*median(abs(row_one_del-median(row_one_del)))/0.67
   row_one[row_one > t] <- t
   row_one[row_one < -t] <- -t
@@ -203,7 +203,7 @@ signal_noise_ratio <- function(cwt2d, ridges, peaks){
 }
 
 
-peaks_detection <- function(vec, min_snr, level=0, misspoint=0){
+peaks_detection <- function(vec, min_snr, level=0){
   if (length(vec)<10){
     return(NULL)
   }
@@ -220,17 +220,20 @@ peaks_detection <- function(vec, min_snr, level=0, misspoint=0){
   snr <- r_snr$snr
   scales <- r_snr$scales
   signals <- vec[peaks]
-  peaks.limits <- c(misspoint+2,length(vec)-misspoint-2)
-  
+
   # refine peaks
-  limit1 <- which(snr>min_snr&signals>level)
-  limit2 <- which(peaks>peaks.limits[1]&peaks<peaks.limits[2])
-  hit <- intersect(limit2,limit1)
-  
+  hit <- which(snr>min_snr & signals>level & scales>5 & diff(c(0,peaks))!=0)
+
   peaks <- peaks[hit]
   snr <- snr[hit]
   scales <- scales[hit]
   signals <- signals[hit]
-  
+
   return(list(peakIndex=peaks,snr=snr,signals=signals,peakScale=scales))
+}
+
+integration <- function(x,yf){
+  n = length(x)
+  integral = 0.5*sum((x[2:n] - x[1:(n-1)]) * (yf[2:n] + yf[1:(n-1)]))
+  return(integral)
 }

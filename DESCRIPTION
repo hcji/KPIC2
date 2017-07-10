@@ -1,13 +1,12 @@
-Package: KPIC
+Package: KPIC2
 Type: Package
-Title: KPIC
-Version: 2.3.1
-Date: 2017-3-20
+Title: Mass Spectrometry-Based Metabolomics Using Pure Ion Chromatograms
+Version: 0.99.0
 Author: Hongchao Ji
 Maintainer: Hongchao Ji <ji.hongchao@foxmail.com>
-Depends: Rcpp, stats, parallel, Ckmeans.1d.dp, mzR, foreach, doParallel, iterators, randomForest, ropls, Matrix, forecast, pracma, caret, ellipse, splancs, ggplot2, kopls, gtools
-Imports: Rcpp (>= 0.11.3), mzR (>= 2.0.0), stats (>= 3.0.2), parallel (>= 3.0.2), Ckmeans.1d.dp (>= 4.0.1), 
-         doParallel (>= 1.0.10), iterators(>= 1.0.8), foreach (>= 1.4.3), Matrix (>= 1.2-6),
-		 randomForest (>= 4.6-12), ropls (>= 1.4.6), pracma, caret, ellipse, splancs, ggplot2, kopls, gtools
-Description: LC-MS data preprocessing for high-throughput, untargeted analyte profiling.
+Description: KPIC2 is an effective platform for LC-MS based metabolomics using pure ion chromatograms, which is developed for metabolomics studies. KPIC2 can detect pure ions accurately, align PICs across samples, group PICs to annotate isotope and adduct PICs, fill missing peaks and pattern recognition. High-resolution mass spectrometers like TOF and Orbitrap are more suitable.
 License: GPL (>= 2)
+Encoding: UTF-8
+LazyData: true
+Imports: Rcpp (>= 0.12.11), mzR (>= 2.10.0), parallel (>= 3.4.0), shiny (>= 1.0.3), plotly (>= 4.7.0)
+LinkingTo: Rcpp

@@ -1,261 +1,394 @@
-LoadData <- function(filename)
-{
-  library(mzR)
-  splitname <- strsplit(filename,"\\.")[[1]]
-  if(tolower(splitname[length(splitname)]) == "cdf")
-  {
-    msobj <- openMSfile(filename,backend="netCDF")
-  }else{
-    msobj <- openMSfile(filename)
-  }
-  
-  peakInfo <- peaks(msobj)
-  headerInfo <- header(msobj)
-  whMS1 <- which(headerInfo$msLevel==1)
-  peakInfo <- peakInfo[whMS1]
-  
-  peakInfo <- lapply(peakInfo, function(spectrum) {
-    keep <- spectrum[,2] > 1e-6
-    output <- as.data.frame(spectrum[keep,,drop = FALSE])
-    colnames(output) <- c('mz','intensity')
-    return(output)
-  })
-  
-  peakNum <- unlist(lapply(peakInfo,nrow))
-  index <- unlist(lapply(peakNum,function(PN){1:PN}))
-  scans <- unlist(lapply(1:length(peakNum),function(s){rep(s,peakNum[s])}))
-  Mat <- cbind(scans,index, do.call(rbind,peakInfo))
-  
-  scanTime <- headerInfo$retentionTime[whMS1]
-  close(msobj)
+getPIC <- function(raw, level, mztol=0.1, gap=3, width=5, ...){
+  orders <- order(raw$mzs)
+  mzs <- raw$mzs[orders]
+  scans <- raw$scans[orders]
+  ints <- raw$ints[orders]
+  scantime <- raw$times
+  rm(raw)
 
-  return(list(Mat=Mat,spectrum=peakInfo,times=scanTime))
-}
-
-locateROI <- function(spectrum,ref.scan,roi.scans,roi.mzs,missp){
-  roi.mat <- list()
-  roi.inds <- list()
-  roi.scans <- roi.scans[1]:roi.scans[2]
-  p <- match(ref.scan,roi.scans)
-  # left direction
-  b <- 0
-  for (s in p:1){
-    if (b>missp){break}
-    scan <- roi.scans[s]
-    inc <- findInterval(roi.mzs,spectrum[[scan]][,1])
-    if (inc[2]<=inc[1]){
-      b <- b+1
-      next}
-    inc <- (inc[1]+1):inc[2]
-    inc <- inc[spectrum[[scan]][inc,2]>0]
-    if (length(inc)<1) {
-      b <- b+1
-      next
-    } # check if used
-    scan.inds <- cbind(rep(scan,length(inc)),inc)
-    scan.mat <- spectrum[[scan]][inc,]
-    roi.mat[[s]] <- scan.mat
-    roi.inds[[s]] <- scan.inds
-    b <- 0
-  }
-
-  # right direction
-  b <- 0
-  for (s in p:length(roi.scans)){
-    if (b>missp){break}
-    scan <- roi.scans[s]
-    inc <- findInterval(roi.mzs,spectrum[[scan]][,1])
-    if (inc[2]<=inc[1]){
-      b <- b+1
-      next}
-    inc <- (inc[1]+1):inc[2]
-    inc <- inc[spectrum[[scan]][inc,2]>0]
-    if (length(inc)<1) {
-      b <- b+1
-      next
-    } # check if used
-    scan.inds <- cbind(rep(scan,length(inc)),inc)
-    scan.mat <- spectrum[[scan]][inc,]
-    roi.mat[[s]] <- scan.mat
-    roi.inds[[s]] <- scan.inds
-    b <- 0
-  }
-  
-  roi.mat <- do.call(rbind,roi.mat)
-  roi.inds <- do.call(rbind,roi.inds)
-  roi.scans <- c(roi.inds[1,1],roi.inds[nrow(roi.inds),1])
-  return(list(roi.scans=roi.scans, roi.inds=roi.inds, roi.mat=roi.mat))
-}
-
-ionRefine <- function(PIC.scans,ref.scan,ref.inte,select.ind,select.mat,spectrum,fst){
-  PIC.intensi <- rep(0,length(PIC.scans))
-  start.point <- which(PIC.scans==ref.scan)
-  # right side
-  S1 <- S2 <- ref.inte
-  for (j in start.point:length(PIC.scans)){
-    scan <- PIC.scans[j]
-    # 2' exponential smoothing forecast
-    tt <- length(S1)
-    w <- fst
-    at <- 2*S1[tt]-S2[tt]
-    bt <- w/(1-w)*(S1[tt]-S2[tt])
-    fore.intensi <- max(0,at+bt)
-    
-    this.scan <- which(select.ind[,1]==scan)
-    if (length(this.scan)>1){
-      intensi <- select.mat[this.scan,2]
-      p <- this.scan[which.min(abs(intensi-fore.intensi))]
-      PIC.intensi[j] <- select.mat[p,2]
-      spectrum[[select.ind[p,1]]][select.ind[p,2],2] <- 0
-    } else if(length(this.scan)==1){
-      p <- this.scan
-      PIC.intensi[j] <- select.mat[p,2]
-      spectrum[[select.ind[p,1]]][select.ind[p,2],2] <- 0
-    }else{
-      PIC.intensi[j] <- fore.intensi
-    }
-    # 2' exponential smoothing
-    S1 <- c(S1,w*PIC.intensi[j]+(1-w)*S1[tt])
-    S2 <- c(S2,w*S1[tt+1]+(1-w)*S2[tt])
-  }
-  
-  # right side
-  S1 <- S2 <- ref.inte
-  for (j in start.point:1){
-    scan <- PIC.scans[j]
-    # 2' exponential smoothing forecast
-    tt <- length(S1)
-    w <- fst
-    at <- 2*S1[tt]-S2[tt]
-    bt <- w/(1-w)*(S1[tt]-S2[tt])
-    fore.intensi <- max(0,at+bt)
-    
-    this.scan <- which(select.ind[,1]==scan)
-    if (length(this.scan)>1){
-      intensi <- select.mat[this.scan,2]
-      p <- this.scan[which.min(abs(intensi-fore.intensi))]
-      PIC.intensi[j] <- select.mat[p,2]
-      spectrum[[select.ind[p,1]]][select.ind[p,2],2] <- 0
-    } else if(length(this.scan)==1){
-      p <- this.scan
-      PIC.intensi[j] <- select.mat[p,2]
-      spectrum[[select.ind[p,1]]][select.ind[p,2],2] <- 0
-    }else{
-      PIC.intensi[j] <- fore.intensi
-    }
-    # 2' exponential smoothing
-    S1 <- c(S1,w*PIC.intensi[j]+(1-w)*S1[tt])
-    S2 <- c(S2,w*S1[tt+1]+(1-w)*S2[tt])
-  }
-  
-  return(list(spectrum=spectrum,PIC.scans=PIC.scans,PIC.intensi=PIC.intensi))
-}
-
-getPIC = function(filename,roi_range=0.1,level=500,min_snr=3,peakwidth=c(5,60),fst=0.3,missp=5){
-  library(Ckmeans.1d.dp)
-  library(data.table)
-  # prepare output
-  PICs <- list()
-  Info <- NULL
-  # load data
-  data <- LoadData(filename)
-  mat <- data$Mat
-  rtlist <- data$times
-  spectrum <- data$spectrum
-  rm(data)
-  
-  min_width <- round(peakwidth[1]/(rtlist[2]-rtlist[1]))
-  max_width <- round(peakwidth[2]/(rtlist[2]-rtlist[1])/2)
-  mzrange <- roi_range/2
-  
   # set seeds
-  mat <- mat[mat[,'intensity']>=level,]
-  mat <- mat[order(mat[,'intensity']),]
+  scanwidth <- as.integer(width/mean(diff(scantime)))
+  seeds <- which(ints>level)
+  seeds <- seeds[order(-ints[seeds])]
+  clu <- rep(0, length(ints))
 
-  for (i in 1:nrow(mat)) {
-    ref.scan <- as.numeric(mat[i,'scans'])
-    ref.index <- as.numeric(mat[i,'index'])
-    ref.inte <- spectrum[[ref.scan]][ref.index,2]
-    ref.mz <- spectrum[[ref.scan]][ref.index,1]
-    if (length(ref.inte)<1){next}
-    if (ref.inte<level){next}
+  # detect pics
+  clu <- getPIP(seeds,scans,mzs,clu,mztol,gap)
+  orders <- order(clu)
+  clu <- clu[orders]
+  mzs <- mzs[orders]
+  scans <- scans[orders]
+  ints <- ints[orders]
 
-    # set range of roi
-    roi.scans <- c(max(1,ref.scan-max_width),min(length(rtlist),ref.scan+max_width))
-    roi.mzs <- c(ref.mz-mzrange,ref.mz+mzrange)
-    roi.mat <- NULL
-    roi.inds <-NULL
-    
-    # locate roi
-    roi <- locateROI(spectrum,ref.scan,roi.scans,roi.mzs,missp)
-    roi.scans <- roi$roi.scans
-    roi.inds <- roi$roi.inds
-    roi.mat <- roi$roi.mat
-    rm(roi)
-    
-    # check roi length
-    if (roi.scans[2]-roi.scans[1]<min_width){
-      spectrum[[ref.scan]][ref.index,2] <- 0
-      next}
-    
-    # calculate m/z difference
-    mzdiff <- (roi.mat[,1]-ref.mz)^2
-    
-    # kmeans cluster
-    r_kmeans <- Ckmeans.1d.dp(mzdiff, k=c(1,5))
-    mincenter <- min(r_kmeans$centers)
-    tClu <- which(r_kmeans$centers==mincenter)
-    sel <- which(r_kmeans$cluster==tClu)
-    if (length(sel)<min_width){next}
-    select.mat <- roi.mat[sel,]
-    select.ind <- roi.inds[sel,]
-    
-    # refine by exponential smoothing forecasting
-    PIC.scans <- roi.scans[1]:roi.scans[2]
-    pic <- ionRefine(PIC.scans,ref.scan,ref.inte,select.ind,select.mat,spectrum,fst)
-    spectrum <- pic$spectrum
-    PIC.scans <- pic$PIC.scans
-    PIC.intensi <- pic$PIC.intensi
-    rm(pic)
-    
-    # peak detection
-    r_peak_detection <- peaks_detection(PIC.intensi,min_snr,level,missp)
-    mainPeak <- which.max(r_peak_detection$signal)
-    if (length(r_peak_detection$peakIndex)==0){
-      next
-    }
-    if (r_peak_detection$signals[mainPeak]<level){
-      next
-    }
-    
-    # collect infomation of PIC
-    peak_rt <- rtlist[PIC.scans[r_peak_detection$peakIndex[mainPeak]]]
-    peak_snr <- r_peak_detection$snr[mainPeak]
-    peak_scale <- r_peak_detection$peakScale[mainPeak]
-    rtmin <- rtlist[PIC.scans[1]]
-    rtmax <- rtlist[PIC.scans[length(PIC.scans)]]
-    mz_rsd <- sd(select.mat[,1])/mean(select.mat[,1])*1000000
-    
-    output <- c(ref.mz,
-                min(select.mat[,1]),
-                max(select.mat[,1]),
-                peak_rt,
-                rtmin,
-                rtmax,
-                max(PIC.intensi),
-                peak_snr,
-                peak_scale,
-                mz_rsd)
-    # output PIC.i
-    Info <- rbind(Info,output)
-    PIC.i <- cbind(rtlist[PIC.scans],PIC.intensi)
-    colnames(PIC.i) <- c('rt','intensity')
-    PICs <- c(PICs,list(PIC.i))
-  }
-  colnames(Info) <-  c("mz","mzmin","mzmax","rt","rtmin","rtmax","maxo","snr","scale","rsd")
-  index <- 1:nrow(Info)
-  Info <- cbind(index,Info)
-  gc()
-  return(list(Info=Info,PICs=PICs,rt=rtlist))
+  picind <- c(findInterval(0:max(clu),clu))
+  pics <- lapply(1:(length(picind)-1),function(s){
+    pic <- cbind(scans[(picind[s]+1):picind[s+1]],ints[(picind[s]+1):picind[s+1]],mzs[(picind[s]+1):picind[s+1]])
+    pic <- pic[order(pic[,1]),]
+    return(pic)
+  })
+  pic_length <- unlist(sapply(pics,length))
+  pics <- pics[pic_length>3*scanwidth]
+
+  # interpolation of missing points of pic
+  pics <- lapply(pics,function(pic){
+    scan <- pic[1,1]:pic[nrow(pic),1]
+    int <- approx(pic[,1],pic[,2],scan)$y
+    mz <- approx(pic[,1],pic[,3],scan)$y
+    cbind(scan,int,mz)
+  })
+
+  return(list(rt=scantime,pics=pics))
 }
 
+getPIC.kmeans <- function(raw, level, mztol=0.1, gap=3, width=c(5,60), alpha=0.3, ...){
+  orders <- order(raw$mzs)
+  mzs <- raw$mzs[orders]
+  scans <- raw$scans[orders]
+  ints <- raw$ints[orders]
+  scantime <- raw$times
+  rm(raw)
+
+  # set seeds
+  scanwidth <- as.integer(width/mean(diff(scantime)))
+  seeds <- which(ints>level)
+  seeds <- seeds[order(-ints[seeds])]
+  clu <- rep(0, length(ints))
+
+  # detect pics
+  clu <- getPIP_kmeans(seeds, scans, mzs, ints, clu, mztol, gap, scanwidth[1], scanwidth[2], alpha)
+  orders <- order(clu)
+  clu <- clu[orders]
+  mzs <- mzs[orders]
+  scans <- scans[orders]
+  ints <- ints[orders]
+
+  picind <- c(findInterval(0:max(clu),clu))
+  pics <- lapply(1:(length(picind)-1),function(s){
+    pic <- cbind(scans[(picind[s]+1):picind[s+1]],ints[(picind[s]+1):picind[s+1]],mzs[(picind[s]+1):picind[s+1]])
+    pic <- pic[order(pic[,1]),]
+    return(pic)
+  })
+  pic_length <- unlist(sapply(pics,length))
+  pics <- pics[pic_length>3*scanwidth[1]]
+
+  # interpolation of missing points of pic
+  pics <- lapply(pics,function(pic){
+    scan <- pic[1,1]:pic[nrow(pic),1]
+    int <- approx(pic[,1],pic[,2],scan)$y
+    mz <- rep(NA,length(scan))
+    mz[pic[,1]%in%scan] <- pic[,2]
+    # mz <- approx(pic[,1],pic[,3],scan)$y
+    cbind(scan,int,mz)
+  })
+
+  return(list(rt=scantime, pics=pics))
+}
+
+PICdetection <- function(pics, min_snr, level){
+  peaks <- lapply(pics$pics,function(pic){
+    peaks_detection(pic[,2], min_snr, level)
+  })
+  nps <- sapply(peaks,function(peaki){
+    length(peaki$peakIndex)
+  })
+  pics$pics <- pics$pics[nps>0]
+  pics$peaks <- peaks[nps>0]
+  return(pics)
+}
+
+.PICsplit <- function(peak,pic){
+  sigs <- peak$signals
+  top <- peak$signals
+  valls <- sapply(1:(length(peak$peakIndex)-1), function(s){
+    peak$peakIndex[s]-1+which.min(pic[peak$peakIndex[s]:peak$peakIndex[s+1],2])
+  })
+  vall.vals <- pic[valls,2]
+  thres <- sapply(1:(length(peak$peakIndex)-1), function(s){
+    0.5*min(pic[c(peak$peakIndex[s],peak$peakIndex[s+1]),2])
+  })
+  sp <- which(vall.vals < thres)
+  if (length(sp)>0){
+    splp <- valls[sp]
+    starts <- c(1,splp+1)
+    ends <- c(splp,nrow(pic))
+    pic <- lapply(1:length(starts),function(s){
+      pic[starts[s]:ends[s],]
+    })
+    ps <- c(1,sp+1)
+    pe <- c(sp,length(peak$peakIndex))
+    peak <- lapply(1:length(ps),function(s){
+      peakIndex <- peak$peakIndex[ps[s]:pe[s]]-starts[s]+1
+      snr <- peak$snr[ps[s]:pe[s]]
+      signals <- peak$signals[ps[s]:pe[s]]
+      peakScale <- peak$peakScale[ps[s]:pe[s]]
+      list(peakIndex=peakIndex,snr=snr,signals=signals,peakScale=peakScale)
+    })
+    return(list(n=length(sp),peak=peak,pic=pic))
+  } else {return(list(n=0,peak=peak,pic=pic))}
+}
+
+PICsplit <- function(pics){
+  pics1 <- list()
+  peaks1 <- list()
+  for (i in 1:length(pics$pics)){
+    peak <- pics$peaks[[i]]
+    pic <- pics$pics[[i]]
+    if (length(pics$peaks[[i]]$peakIndex)>1){
+      res <- .PICsplit(peak,pic)
+      if (res$n>0){
+        pics1 <- c(pics1,res$pic)
+        peaks1 <- c(peaks1,res$peak)
+        next
+      }
+    }
+    pics1 <- c(pics1,list(pic))
+    peaks1 <- c(peaks1,list(peak))
+  }
+
+  pics$pics <- pics1
+  pics$peaks <- peaks1
+  return(pics)
+}
+
+getPeaks <- function(pics){
+  mzinfo <- lapply(pics$pics,function(pic){
+    mz <- mean(pic[,3], na.rm=TRUE)
+    mzmin <- min(pic[,3], na.rm=TRUE)
+    mzmax <- max(pic[,3], na.rm=TRUE)
+    mzrsd <- sd(pic[,3], na.rm=TRUE)/mz*10^6
+    c(mz,mzmin,mzmax,mzrsd)
+  })
+
+  peakpos <- sapply(pics$peaks,function(peaki){
+    peaki$peakIndex[which.max(peaki$signals)]
+  })
+
+  snr <- sapply(pics$peaks,function(peaki){
+    peaki$snr[which.max(peaki$signals)]
+  })
+
+  snr <- round(snr,2)
+  rt <- sapply(1:length(pics$pics),function(s){
+    pics$scantime[pics$pics[[s]][peakpos[s],1]]
+  })
+  rtmin <- sapply(pics$pics,function(pic){
+    pics$scantime[pic[1,1]]
+  })
+  rtmax <- sapply(pics$pics,function(pic){
+    pics$scantime[pic[nrow(pic),1]]
+  })
+  maxo <- sapply(pics$pics,function(pic){
+    max(pic[,2])
+  })
+  area <- sapply(pics$pics,function(pic){
+    round(integration(pic[,1],pic[,2]))
+  })
+
+  mzinfo <- round(do.call(rbind,mzinfo),4)
+  colnames(mzinfo) <- c('mz','mzmin','mzmax','mzrsd')
+
+  peakinfo <- cbind(rt,rtmin,rtmax,mzinfo,maxo,area,snr)
+  pics$peakinfo <- peakinfo
+
+  return(pics)
+}
+
+.PICresolve <- function(peak, pic, pval){
+  hh <- 0.5*(pic[c(peak$peakIndex),2])
+  ranges <- whichAsIRanges(pic[,2]>min(hh))
+
+  mids <- round(diff(peak$peakIndex)/2) + peak$peakIndex[1:(length(peak$peakIndex)-1)]
+  starts <- c(min(start(ranges)),mids)
+  ends <- c(mids,max(end(ranges)))
+
+  tpeak <- rep(TRUE,length(starts))
+
+  for (i in 1:(length(starts)-1)){
+    mz1 <- pic[starts[i]:ends[i],3]
+    mz2 <- pic[starts[i+1]:ends[i+1],3]
+    p <- t.test(mz1,mz2)$p.value
+    if (p > pval){
+      if (peak$signals[i]>peak$signals[i+1]){tpeak[i+1] <- FALSE
+      }else{tpeak[i] <- FALSE}
+    }
+  }
+
+  peak$peakIndex <- peak$peakIndex[tpeak]
+  peak$snr <- peak$snr[tpeak]
+  peak$signals <- peak$signals[tpeak]
+  peak$peakScale <- peak$peakScale[tpeak]
+
+  return(list(peak=peak, pic=pic))
+}
+
+PICresolve <- function(pics, pval=0.01){
+  library(IRanges)
+  library(stats)
+
+  pics1 <- list()
+  peaks1 <- list()
+
+  npeak <- sapply(pics$peaks,function(peak){
+    length(peak$peakIndex)
+  })
+
+  for (i in 1:length(pics$pics)){
+    pic <- pics$pics[[i]]
+    peak <- pics$peaks[[i]]
+    if (npeak[i] < 2){
+      pics1 <- c(pics1,list(pic))
+      peaks1 <- c(peaks1,list(peak))
+      next }else{
+        res <- .PICresolve(peak, pic, pval)
+        pics1 <- c(pics1,list(res$pic))
+        peaks1 <- c(peaks1,list(res$peak))
+      }
+  }
+
+  pics$pics <- pics1
+  pics$peaks <- peaks1
+
+  return(pics)
+}
+
+.PICfit <- function(peak,pic,iter){
+  # define sub-functions
+  Gaussian <- function(x,position,width){
+    exp(-((x-position)/(0.6005612*width))^2);
+  }
+
+  fitGaussian <- function(lambda,x,y){
+    A <- matrix(0,length(x),round(length(lambda)/2))
+    for(j in 1:(length(lambda)/2))
+    {
+      position <-lambda[2*j-1] ; width <- lambda[2*j];
+      A[ ,j] <- Gaussian(x,lambda[2*j-1],lambda[2*j]);
+    }
+    lf=lsfit(A,y)
+    PEAKHEIGHTS=abs(lf$coef[-1])
+    e=y-A%*%PEAKHEIGHTS
+    return(base::norm(as.matrix(e),'2'))
+  }
+
+  fitness <- function(lambda,x,y){
+    -fitGaussian(lambda,x,y)
+  }
+
+  peakrange <- function(position,width,pos,wid){
+    lambda <- cbind(position,width);
+    NumPeaks <- nrow(lambda);
+    lb <- as.vector(lambda);
+    ub <- as.vector(lambda);
+    for(i in 1:NumPeaks){
+      ub[2*i-1] <- lambda[i,1]+pos*lambda[i,1];
+      lb[2*i-1] <- lambda[i,1]-pos*lambda[i,1];
+      ub[2*i] <- lambda[i,2]+wid*lambda[i,2];
+      lb[2*i] <- lambda[i,2]-wid*lambda[i,2];
+    }
+    output <- list(ub=ub,lb=lb)
+    return(output)
+  }
+
+  PEAKHEIGHTS <- function(fitresults,xa,y){
+    # The positionwidth is the results of the initial estimation or GAs for position or width.
+    NumPeaks <- length(fitresults)/2;
+    lambda <- matrix(fitresults,nrow=NumPeaks,byrow=TRUE)
+    A <- matrix(0,length(xa),round(length(lambda)/2))
+    for(j in 1:(length(lambda)/2))
+    {
+      A[ ,j] <- Gaussian(xa,lambda[j,1],lambda[j,2]);
+    }
+    lf=lsfit(A,y)
+    PEAKHEIGHTS=abs(lf$coef[-1])
+    return(matrix(PEAKHEIGHTS))
+  }
+
+  # end of sub-functions
+
+  hh <- 0.5*(pic[c(peak$peakIndex),2])
+  ranges <- whichAsIRanges(pic[,2]>min(hh))
+
+  if (length(peak$peakIndex)>1){
+    mids <- round(diff(peak$peakIndex)/2) + peak$peakIndex[1:(length(peak$peakIndex)-1)]
+    starts <- c(min(start(ranges)),mids)
+    ends <- c(mids,max(end(ranges)))
+
+    widths <- (ends-starts)*1.7
+    heights <- peak$signals
+    positions <- peak$peakIndex
+
+    lambda <- as.vector(t(cbind(positions,widths)));
+
+    lb <- peakrange(positions,widths,0.05,0.9)$lb
+    ub <- peakrange(positions,widths,0.05,0.9)$ub
+
+    GA <- ga(type = "real-valued", fitness = fitness,
+             x = 1:nrow(pic), y = pic[,2], min = c(lb), max = c(ub),
+             popSize=300, maxiter=iter)
+
+    fitresults <- matrix(GA@solution, nrow=1);
+    heights <- matrix(PEAKHEIGHTS(fitresults,1:nrow(pic),pic[,2]));
+    positions <- sapply(1:(length(fitresults)/2),function(s){fitresults[2*s-1]})
+    widths <- sapply(1:(length(fitresults)/2),function(s){fitresults[2*s]})
+
+    fitpics <- lapply(1:length(positions),function(s){heights[s]*Gaussian(1:nrow(pic),positions[s],widths[s])})
+
+  } else {
+    starts <- min(start(ranges))
+    ends <- max(end(ranges))
+
+    widths <- (ends-starts+1)*1.7
+    heights <- max(pic[,2])
+    positions <- which.max(pic[,2])
+
+    fit <- nls(pic[,2]~heights*Gaussian(1:nrow(pic),positions,widths),start=list(heights=heights,positions=positions,widths=widths),
+               control=list(maxiter=500,tol=1e-3,minFactor=1/512,printEval=F,warnOnly=T))
+
+    fitpics <- list(predict(fit,1:nrow(pic)))
+    heights <- max(fitpics[[1]])
+    positions <- which.max(fitpics[[1]])
+    widths <- summary(fit)$parameters['widths','Estimate']
+  }
+  peak$peakIndex <- round(positions)
+  peak$width <- round(widths)
+  peak$signals <- heights
+  return(list(peak=peak, fitpics=fitpics))
+}
+
+PICfit <- function(pics, iter=50){
+  library(GA)
+  peaks1 <- list()
+  pics1 <- list()
+  for (s in 1:length(pics$pics)) {
+    peak <- pics$peaks[[s]]
+    pic <- pics$pics[[s]]
+    res <- .PICfit(peak, pic, iter)
+    if (length(res$peak$peakIndex)>1){
+      for(i in 1:length(res$peak$peakIndex)){
+        peak1 <- list(peakIndex=res$peak$peakIndex[i],
+                      snr=res$peak$snr[i],
+                      signals=res$peak$signals[i],
+                      peakScale=res$peak$peakScale[i],
+                      width=res$peak$width[i])
+        pic1 <- cbind(pic[,1],res$fitpics[[i]])
+        mz1 <- rep(NA, nrow(pic1))
+        st <- max(1,round((res$peak$peakIndex[i-1]+res$peak$peakIndex[i])/2), na.rm=TRUE)
+        ed <- min(nrow(pic),round((res$peak$peakIndex[i]+res$peak$peakIndex[i+1])/2), na.rm=TRUE)
+        mz1[st:ed] <- pic[st:ed,3]
+        pic1 <- cbind(pic1,mz1)
+        colnames(pic1) <- NULL
+
+        pics1 <- c(pics1, list(pic1))
+        peaks1 <- c(peaks1, list(peak1))
+      }
+    } else {
+      pic[,2] <- unlist(res$fitpics)
+      pics1 <- c(pics1, list(pic))
+      peaks1 <- c(peaks1, list(res$peak))
+    }
+  }
+  pics$pics <- pics1
+  pics$peaks <- peaks1
+
+  return(pics)
+}

@@ -1,43 +1,6 @@
-import("Matrix")
-import("mzR")
-import("Ckmeans.1d.dp")
-import("foreach")
-import("Rcpp")
-import("doParallel")
-import("iterators")
-import("parallel")
-import("compiler")
-
-importFrom("grDevices", "chull")
-importFrom("graphics", "lines", "polygon")
-importFrom("stats", "coefficients", "cov", "t.test")
-importFrom("utils", "setTxtProgressBar", "txtProgressBar")
-importFrom("graphics", "plot")
-importFrom("stats", "approx", "convolve", "cor", "density", "fft",
-           "median", "mvfft", "nextn", "nls", "predict", "quantile",
-           "rnorm", "sd")
-
-exportPattern(
-  "LoadData",
-  "getPIC",
-  "getTIC",
-  "KPICset",
-  "PIAlign",
-  "getSpectrum",
-  "seg_rtcor",
-  "PAFFT",
-  "PICplot",
-  "PICgroup",
-  "groupCombine",
-  "getPseudospecturm",
-  "PICeval",
-  "getDataMatrix",
-  "fillPeaks.peakfinder",
-  "fillPeaks.EIBPC",
-  "s.fillpeaks",
-  "pretreat",
-  "peak.analyst.oplsda",
-  "peak.analyst.plsda",
-  "peak.analyst.rf",
-  "peak.analyst.koplsda"
-  )
+exportPattern("LoadData","getPIC","getPIC.kmeans","getPIP","getPIP.kmeans","PICset","PICset.kmeans",
+              "getTICs","viewTICs","getMS","viewMS","viewPICs","PICdetection","PICsplit","getPeaks",
+              "PICresolve","PICfit","PICset.detection","PICset.split","PICset.resolve","PICset.getPeaks")
+importFrom(Rcpp, evalCpp)
+importFrom("stats", "approx", "fft", "median", "mvfft", "quantile", "sd")
+useDynLib(KPIC2)
