@@ -8,7 +8,21 @@ readfiles <- function(files, fullName=TRUE){
   return(listed)
 }
 
-PICset <- function(files, level, mztol=0.1, gap=3, width=5, ...){
+rtequal <- function(rt0,pics){
+  rt <- pics$rt
+  for (i in 1:length(pics$pics)){
+    pic <- pics$pics[[i]]
+    rt.i <- rt[pic[,1]]
+    rt0.i <- rt0[pic[,1]]
+    int.i <- approx(rt.i,pic[,2],rt0.i)$y
+    pic[,2] <- int.i
+    pics$pics[[i]] <- pic
+  }
+  pics$rt <- rt0
+  return(pics)
+}
+
+PICset <- function(files, level, mztol=0.1, gap=3, width=5, min_snr=4, equal=TRUE, ...){
   library(parallel)
   cl <- makeCluster(getOption("cl.cores", detectCores(logical = TRUE)))
   path <- readfiles(files)
@@ -18,57 +32,84 @@ PICset <- function(files, level, mztol=0.1, gap=3, width=5, ...){
     pics$path=filename
     return(pics)
   })
+
+  if (equal){
+    pics <- parLapply(cl, res, function(pics){
+      rtequal(res[[1]]$rt,pics)
+    })}
+
   stopCluster(cl)
   return(res)
 }
 
-PICset.kmeans <- function(files, level, mztol=0.1, gap=3, width=c(5,60), alpha=0.3, ...){
+PICset.kmeans <- function(files, level, mztol=0.1, gap=3, width=c(5,60), min_snr=4, alpha=0.3, equal=TRUE, ...){
   library(parallel)
   cl <- makeCluster(getOption("cl.cores", detectCores(logical = TRUE)))
   path <- readfiles(files)
   res <- parLapply(cl, path,function(filename){
     raw <- LoadData(filename)
-    pics <- getPIC(raw, level, mztol, gap, width, alpha, min_snr)
+    pics <- getPIC.kmeans(raw, level, mztol, gap, width, alpha, min_snr)
     pics$path=filename
     return(pics)
   })
+
+  if (equal){
+    pics <- parLapply(cl, res, function(pics){
+      rtequal(res[[1]]$rt,pics)
+    })}
+
   stopCluster(cl)
   return(res)
 }
 
-PICset.detection <- function(picset, min_snr, level){
+PICset.split <- function(picset, par=FALSE) {
   library(parallel)
-  cl <- makeCluster(getOption("cl.cores", detectCores(logical = TRUE)))
-  res <- parLapply(cl,picset,function(pics){
-    PICdetection(pics, min_snr, level)
-  })
-  stopCluster(cl)
-  return(res)
+  if (!par){
+    for (i in 1:length(picset)){
+      picset[[i]] <- PICsplit(picset[[i]])
+    }
+  }else{
+    cl <- makeCluster(getOption("cl.cores", detectCores(logical = TRUE)))
+    picset <- parLapply(cl,picset,function(pics){
+      PICsplit(pics)
+    })
+    stopCluster(cl)}
+  return(picset)
 }
 
-PICset.split <- function(picset) {
+PICset.resolve <- function(picset, pval=0.01, par=FALSE) {
   library(parallel)
-  cl <- makeCluster(getOption("cl.cores", detectCores(logical = TRUE)))
-  res <- parLapply(cl,picset,function(pics){
-    PICsplit(pics)
-  })
-  stopCluster(cl)
-  return(res)
+  if (!par){
+    for (i in 1:length(picset)){
+      picset[[i]] <- PICresolve(picset[[i]], pval)
+    }
+  }else{
+    cl <- makeCluster(getOption("cl.cores", detectCores(logical = TRUE)))
+    picset <- parLapply(cl,picset,function(pics){
+      PICresolve(pics, pval)
+    })
+    stopCluster(cl)}
+  return(picset)
 }
 
-PICset.resolve <- function(picset, pval=0.01) {
+PICset.fit <- function(picset, iter=50, par=FALSE) {
   library(parallel)
-  cl <- makeCluster(getOption("cl.cores", detectCores(logical = TRUE)))
-  res <- parLapply(cl,picset,function(pics){
-    PICresolve(pics, pval)
-  })
-  stopCluster(cl)
-  return(res)
+  if (!par){
+    for (i in 1:length(picset)){
+      picset[[i]] <- PICfit(picset[[i]], iter)
+    }
+  }else{
+    cl <- makeCluster(getOption("cl.cores", detectCores(logical = TRUE)))
+    picset <- parLapply(cl,picset,function(pics){
+      PICfit(pics, iter)
+    })
+    stopCluster(cl)}
+  return(picset)
 }
 
 PICset.getPeaks <- function(picset){
-  res <- lapply(picset,function(pics){
-    getPeaks(pics)
-  })
+  for (i in 1:length(picset)){
+    picset[[i]] <- getPeaks(picset[[i]])
+  }
   return(res)
 }

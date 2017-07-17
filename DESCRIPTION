@@ -1,12 +1,12 @@
-Package: KPIC2
+Package: KPIC
 Type: Package
 Title: Mass Spectrometry-Based Metabolomics Using Pure Ion Chromatograms
-Version: 0.99.0
+Version: 2.4.0
 Author: Hongchao Ji
 Maintainer: Hongchao Ji <ji.hongchao@foxmail.com>
 Description: KPIC2 is an effective platform for LC-MS based metabolomics using pure ion chromatograms, which is developed for metabolomics studies. KPIC2 can detect pure ions accurately, align PICs across samples, group PICs to annotate isotope and adduct PICs, fill missing peaks and pattern recognition. High-resolution mass spectrometers like TOF and Orbitrap are more suitable.
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
-Imports: Rcpp (>= 0.12.11), mzR (>= 2.10.0), parallel (>= 3.4.0), shiny (>= 1.0.3), plotly (>= 4.7.0)
-LinkingTo: Rcpp
+Imports: Rcpp (>= 0.12.11), RcppArmadillo (>= 0.7.900.2.0), mzR (>= 2.10.0), parallel (>= 3.4.0), shiny (>= 1.0.3), plotly (>= 4.7.0)
+LinkingTo: Rcpp, RcppArmadillo

@@ -1,4 +1,4 @@
-getPIC <- function(raw, level, mztol=0.1, gap=3, width=5, ...){
+getPIC <- function(raw, level, mztol=0.1, gap=3, width=5, min_snr=4, ...){
   orders <- order(raw$mzs)
   mzs <- raw$mzs[orders]
   scans <- raw$scans[orders]
@@ -7,7 +7,7 @@ getPIC <- function(raw, level, mztol=0.1, gap=3, width=5, ...){
   rm(raw)
 
   # set seeds
-  scanwidth <- as.integer(width/mean(diff(scantime)))
+  scanwidth <- as.integer(width/mean(diff(scantime[scantime>0])))
   seeds <- which(ints>level)
   seeds <- seeds[order(-ints[seeds])]
   clu <- rep(0, length(ints))
@@ -36,11 +36,23 @@ getPIC <- function(raw, level, mztol=0.1, gap=3, width=5, ...){
     mz <- approx(pic[,1],pic[,3],scan)$y
     cbind(scan,int,mz)
   })
+  gc()
 
-  return(list(rt=scantime,pics=pics))
+  # peak detection
+  peaks <- lapply(pics,function(pic){
+    peak_detection(pic[,2], min_snr, level)
+  })
+  nps <- sapply(peaks,function(peaki){
+    length(peaki$peakIndex)
+  })
+  pics <- pics[nps>0]
+  peaks <- peaks[nps>0]
+  gc()
+
+  return(list(rt=scantime, pics=pics, peaks=peaks))
 }
 
-getPIC.kmeans <- function(raw, level, mztol=0.1, gap=3, width=c(5,60), alpha=0.3, ...){
+getPIC.kmeans <- function(raw, level, mztol=0.1, gap=3, width=c(5,60), alpha=0.3, min_snr=4, ...){
   orders <- order(raw$mzs)
   mzs <- raw$mzs[orders]
   scans <- raw$scans[orders]
@@ -49,7 +61,7 @@ getPIC.kmeans <- function(raw, level, mztol=0.1, gap=3, width=c(5,60), alpha=0.3
   rm(raw)
 
   # set seeds
-  scanwidth <- as.integer(width/mean(diff(scantime)))
+  scanwidth <- as.integer(width/mean(diff(scantime[scantime>0])))
   seeds <- which(ints>level)
   seeds <- seeds[order(-ints[seeds])]
   clu <- rep(0, length(ints))
@@ -80,20 +92,20 @@ getPIC.kmeans <- function(raw, level, mztol=0.1, gap=3, width=c(5,60), alpha=0.3
     # mz <- approx(pic[,1],pic[,3],scan)$y
     cbind(scan,int,mz)
   })
+  gc()
 
-  return(list(rt=scantime, pics=pics))
-}
-
-PICdetection <- function(pics, min_snr, level){
-  peaks <- lapply(pics$pics,function(pic){
-    peaks_detection(pic[,2], min_snr, level)
+  # peak detection
+  peaks <- lapply(pics,function(pic){
+    peak_detection(pic[,2], min_snr, level)
   })
   nps <- sapply(peaks,function(peaki){
     length(peaki$peakIndex)
   })
-  pics$pics <- pics$pics[nps>0]
-  pics$peaks <- peaks[nps>0]
-  return(pics)
+  pics <- pics[nps>0]
+  peaks <- peaks[nps>0]
+  gc()
+
+  return(list(rt=scantime, pics=pics, peaks=peaks))
 }
 
 .PICsplit <- function(peak,pic){
@@ -159,15 +171,21 @@ getPeaks <- function(pics){
     c(mz,mzmin,mzmax,mzrsd)
   })
 
-  peakpos <- sapply(pics$peaks,function(peaki){
-    peaki$peakIndex[which.max(peaki$signals)]
-  })
+  if (!is.null(pics$peaks)){
+    peakpos <- sapply(pics$peaks,function(peaki){
+      peaki$peakIndex[which.max(peaki$signals)]
+    })
+    snr <- sapply(pics$peaks,function(peaki){
+      peaki$snr[which.max(peaki$signals)]
+    })
+    snr <- round(snr,2)
+  } else {
+    peakpos <- sapply(pics$pics,function(pic){
+      pic[which.max(pic[,2]),1]
+    })
+    snr <- rep(NA, length(peakpos))
+  }
 
-  snr <- sapply(pics$peaks,function(peaki){
-    peaki$snr[which.max(peaki$signals)]
-  })
-
-  snr <- round(snr,2)
   rt <- sapply(1:length(pics$pics),function(s){
     pics$scantime[pics$pics[[s]][peakpos[s],1]]
   })
@@ -206,7 +224,11 @@ getPeaks <- function(pics){
   for (i in 1:(length(starts)-1)){
     mz1 <- pic[starts[i]:ends[i],3]
     mz2 <- pic[starts[i+1]:ends[i+1],3]
-    p <- t.test(mz1,mz2)$p.value
+    if (min(length(mz1),length(mz2))<2) {
+      p <- 1
+    } else {
+      p <- t.test(mz1,mz2)$p.value
+    }
     if (p > pval){
       if (peak$signals[i]>peak$signals[i+1]){tpeak[i+1] <- FALSE
       }else{tpeak[i] <- FALSE}

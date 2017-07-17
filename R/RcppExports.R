@@ -2,10 +2,38 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 getPIP <- function(seeds, scans, mzs, clu, mztol, gap) {
-    .Call('KPIC2_getPIP', PACKAGE = 'KPIC2', seeds, scans, mzs, clu, mztol, gap)
+    .Call('KPIC_getPIP', PACKAGE = 'KPIC', seeds, scans, mzs, clu, mztol, gap)
 }
 
 getPIP_kmeans <- function(seeds, scans, mzs, ints, clu, mztol, gap, min_width, max_width, alpha) {
-    .Call('KPIC2_getPIP_kmeans', PACKAGE = 'KPIC2', seeds, scans, mzs, ints, clu, mztol, gap, min_width, max_width, alpha)
+    .Call('KPIC_getPIP_kmeans', PACKAGE = 'KPIC', seeds, scans, mzs, ints, clu, mztol, gap, min_width, max_width, alpha)
+}
+
+waveft <- function(omega, scales) {
+    .Call('KPIC_waveft', PACKAGE = 'KPIC', omega, scales)
+}
+
+cwtft <- function(val) {
+    .Call('KPIC_cwtft', PACKAGE = 'KPIC', val)
+}
+
+localMax <- function(cwt2d) {
+    .Call('KPIC_localMax', PACKAGE = 'KPIC', cwt2d)
+}
+
+localMin <- function(cwt2d) {
+    .Call('KPIC_localMin', PACKAGE = 'KPIC', cwt2d)
+}
+
+ridgesDetection <- function(cwt2d, val) {
+    .Call('KPIC_ridgesDetection', PACKAGE = 'KPIC', cwt2d, val)
+}
+
+peaksPosition <- function(val, ridges, cwt2d) {
+    .Call('KPIC_peaksPosition', PACKAGE = 'KPIC', val, ridges, cwt2d)
+}
+
+getSignal <- function(cwt2d, ridges, peaks) {
+    .Call('KPIC_getSignal', PACKAGE = 'KPIC', cwt2d, ridges, peaks)
 }
 

@@ -183,4 +183,3 @@ viewPICs <- function(pics){
   }
   shinyApp(ui = ui, server = server)
 }
-
