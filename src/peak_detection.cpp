@@ -147,7 +147,7 @@ List ridgesDetection(NumericMatrix cwt2d, NumericVector val) {
       int row_plus = row_best + j;
       int row_minus = row_best - j;
 
-      if (row_minus>0 && 2<col_minus && col_minus<n_cols-2){
+      if (row_minus>0 && 2<=col_minus && col_minus<=n_cols-2){
         if (local_max(row_minus, col_minus + 1)){col_minus = col_minus + 1;
         }else if(local_max(row_minus, col_minus + 2)){col_minus = col_minus + 2;
         }else if(local_max(row_minus, col_minus - 2)){col_minus = col_minus - 2;
@@ -160,7 +160,7 @@ List ridgesDetection(NumericMatrix cwt2d, NumericVector val) {
         }
       }
 
-      if (row_plus<n_rows && 2<col_plus && col_plus<n_cols-2){
+      if (row_plus<n_rows && 2<=col_plus && col_plus<=n_cols-2){
         if (local_max(row_plus, col_plus + 1)){col_plus = col_plus + 1;
         }else if(local_max(row_plus, col_plus + 2)){col_plus = col_plus + 2;
         }else if(local_max(row_plus, col_plus - 2)){col_plus = col_plus - 2;

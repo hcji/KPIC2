@@ -49,7 +49,7 @@ getPIC <- function(raw, level, mztol=0.1, gap=3, width=5, min_snr=4, ...){
   peaks <- peaks[nps>0]
   gc()
 
-  return(list(rt=scantime, pics=pics, peaks=peaks))
+  return(list(scantime=scantime, pics=pics, peaks=peaks))
 }
 
 getPIC.kmeans <- function(raw, level, mztol=0.1, gap=3, width=c(5,60), alpha=0.3, min_snr=4, ...){
@@ -105,12 +105,10 @@ getPIC.kmeans <- function(raw, level, mztol=0.1, gap=3, width=c(5,60), alpha=0.3
   peaks <- peaks[nps>0]
   gc()
 
-  return(list(rt=scantime, pics=pics, peaks=peaks))
+  return(list(scantime=scantime, pics=pics, peaks=peaks))
 }
 
 .PICsplit <- function(peak,pic){
-  sigs <- peak$signals
-  top <- peak$signals
   valls <- sapply(1:(length(peak$peakIndex)-1), function(s){
     peak$peakIndex[s]-1+which.min(pic[peak$peakIndex[s]:peak$peakIndex[s+1],2])
   })
@@ -119,6 +117,7 @@ getPIC.kmeans <- function(raw, level, mztol=0.1, gap=3, width=c(5,60), alpha=0.3
     0.5*min(pic[c(peak$peakIndex[s],peak$peakIndex[s+1]),2])
   })
   sp <- which(vall.vals < thres)
+  sp <- sp[diff(c(0,valls[sp]))>10]
   if (length(sp)>0){
     splp <- valls[sp]
     starts <- c(1,splp+1)

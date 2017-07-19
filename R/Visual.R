@@ -162,15 +162,15 @@ viewPICs <- function(pics){
     output$Plot <- renderPlotly({
       pic.i <- pics$pics[[input$inds]]
       peak.i <- pics$peaks[[input$inds]]
-      plot_ly(x=pics$rt[pic.i[,1]], y=pic.i[,2], type = 'scatter', mode = 'lines', showlegend= FALSE) %>%
+      plot_ly(x=pics$scantime[pic.i[,1]], y=pic.i[,2], type = 'scatter', mode = 'lines', showlegend= FALSE) %>%
         layout(xaxis = list(tick0 = 0, title = 'Retention Time (s)'),
                yaxis = list(title = 'Intensity')) %>%
-        add_markers(x=pics$rt[pic.i[peak.i$peakIndex,1]], y=pic.i[peak.i$peakIndex,2])
+        add_markers(x=pics$scantime[pic.i[peak.i$peakIndex,1]], y=pic.i[peak.i$peakIndex,2])
     })
     output$Plot1 <- renderPlotly({
       pic.i <- pics$pics[[input$inds]]
       pic.i <- pic.i[!is.na(pic.i[,3]),]
-      plot_ly(x=pics$rt[pic.i[,1]], y=pic.i[,3], color=pic.i[,2] ,type = 'scatter') %>%
+      plot_ly(x=pics$scantime[pic.i[,1]], y=pic.i[,3], color=pic.i[,2] ,type = 'scatter') %>%
         layout(xaxis = list(tick0 = 0, title = 'Retention Time (s)'),
                yaxis = list(title = 'M/Z'))
     })
@@ -179,6 +179,50 @@ viewPICs <- function(pics){
       gf <- gaussfit(pic.i)
       sp <- getSharpness(pic.i)
       paste('Evaluation result: ', 'gaussian fitness ', gf, ' sharpness ', sp)
+    })
+  }
+  shinyApp(ui = ui, server = server)
+}
+
+viewGroups <- function(groups){
+  library(shiny)
+  library(plotly)
+
+  ui <- fluidPage(
+    titlePanel("groups Viewer"),
+    sidebarLayout(
+      sidebarPanel(
+        sliderInput("inds",
+                    "index of group:",
+                    min = 1,
+                    max = max(groups$peakmat[,'group']),
+                    value = 1,
+                    step=1)
+      ),
+      mainPanel(
+        h4 (textOutput("info"),
+        plotlyOutput("Plot")
+        )
+      )
+    )
+  )
+
+  server <- function(input, output) {
+    output$Plot <- renderPlotly({
+      p <- plot_ly()
+      candidates <- groups$peakmat[groups$peakmat[,'group']==input$inds,]
+      for (i in 1:nrow(candidates)){
+        pic <- groups$picset[[candidates[i,'sample']]]$pics[[candidates[i,'index']]]
+        p <- add_trace(p, x=pic[,1], y=pic[,2], type = 'scatter', mode = 'lines')
+      }
+      p
+    })
+
+    output$info <- renderText({
+      candidates <- groups$peakmat[groups$peakmat[,'group']==input$inds,]
+      mz_s <- min(candidates[,'mzmin'])
+      mz_e <- max(candidates[,'mzmax'])
+      paste('m/z from ', mz_s, 'to', mz_e)
     })
   }
   shinyApp(ui = ui, server = server)

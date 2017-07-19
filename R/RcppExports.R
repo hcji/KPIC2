@@ -9,6 +9,10 @@ getPIP_kmeans <- function(seeds, scans, mzs, ints, clu, mztol, gap, min_width, m
     .Call('KPIC_getPIP_kmeans', PACKAGE = 'KPIC', seeds, scans, mzs, ints, clu, mztol, gap, min_width, max_width, alpha)
 }
 
+findCandidate <- function(ind, mzmin, mzmax, rtmin, rtmax, mz, rt, group) {
+    .Call('KPIC_findCandidate', PACKAGE = 'KPIC', ind, mzmin, mzmax, rtmin, rtmax, mz, rt, group)
+}
+
 waveft <- function(omega, scales) {
     .Call('KPIC_waveft', PACKAGE = 'KPIC', omega, scales)
 }

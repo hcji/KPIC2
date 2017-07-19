@@ -18,11 +18,12 @@ getNoise <- function(peaks, cwt2d, ridges){
   return(noises)
 }
 
-peak_detection <- function(vec, min_snr, scales, level=0){
+peak_detection <- function(vec, min_snr, level=0){
   cwt2d <- cwtft(vec)
   sca <- cwt2d$scales
   cwt2d <- cwt2d$cwt2d
   ridges <- ridgesDetection(cwt2d, vec)
+  if (length(ridges$ridges_rows)<1){return(NULL)}
   peaks <- peaksPosition(vec, ridges, cwt2d)
   signals <- getSignal(cwt2d, ridges, peaks)
   scales <- sca[1+signals$ridge_lens]
@@ -32,12 +33,17 @@ peak_detection <- function(vec, min_snr, scales, level=0){
   snr <- (signals+10^-5)/(noises+10^-5)
   refine <- snr>min_snr & scales>4 & vec[peaks]>level
 
-  peaks <- peaks[refine]
-  scales <- scales[refine]
-  snr <- snr[refine]
   info <- cbind(peaks, scales, snr)
+  info <- info[refine,]
   info <- unique(info)
-  return(list(peakIndex=info[,1], scales=info[,2], snr=info[,3]))
+  if (length(info)==0){return(NULL)
+  } else if (length(info)>3){
+    info <- info[order(info[,1]),]
+    peakIndex=info[,1]; peakScale=info[,2]; snr=info[,3]; signals=vec[info[,1]]
+  } else {
+    peakIndex=info[1]; peakScale=info[2]; snr=info[3]; signals=vec[info[1]]
+  }
+  return(list(peakIndex=peakIndex, peakScale=peakScale, snr=snr, signals=signals))
 }
 
 integration <- function(x,yf){

@@ -42,6 +42,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// findCandidate
+NumericVector findCandidate(int ind, double mzmin, double mzmax, double rtmin, double rtmax, NumericVector mz, NumericVector rt, NumericVector group);
+RcppExport SEXP KPIC_findCandidate(SEXP indSEXP, SEXP mzminSEXP, SEXP mzmaxSEXP, SEXP rtminSEXP, SEXP rtmaxSEXP, SEXP mzSEXP, SEXP rtSEXP, SEXP groupSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type ind(indSEXP);
+    Rcpp::traits::input_parameter< double >::type mzmin(mzminSEXP);
+    Rcpp::traits::input_parameter< double >::type mzmax(mzmaxSEXP);
+    Rcpp::traits::input_parameter< double >::type rtmin(rtminSEXP);
+    Rcpp::traits::input_parameter< double >::type rtmax(rtmaxSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type mz(mzSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type rt(rtSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type group(groupSEXP);
+    rcpp_result_gen = Rcpp::wrap(findCandidate(ind, mzmin, mzmax, rtmin, rtmax, mz, rt, group));
+    return rcpp_result_gen;
+END_RCPP
+}
 // waveft
 NumericMatrix waveft(NumericVector omega, NumericVector scales);
 RcppExport SEXP KPIC_waveft(SEXP omegaSEXP, SEXP scalesSEXP) {
@@ -129,6 +147,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"KPIC_getPIP", (DL_FUNC) &KPIC_getPIP, 6},
     {"KPIC_getPIP_kmeans", (DL_FUNC) &KPIC_getPIP_kmeans, 10},
+    {"KPIC_findCandidate", (DL_FUNC) &KPIC_findCandidate, 8},
     {"KPIC_waveft", (DL_FUNC) &KPIC_waveft, 2},
     {"KPIC_cwtft", (DL_FUNC) &KPIC_cwtft, 1},
     {"KPIC_localMax", (DL_FUNC) &KPIC_localMax, 1},

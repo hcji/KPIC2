@@ -9,7 +9,7 @@ readfiles <- function(files, fullName=TRUE){
 }
 
 rtequal <- function(rt0,pics){
-  rt <- pics$rt
+  rt <- pics$scantime
   for (i in 1:length(pics$pics)){
     pic <- pics$pics[[i]]
     rt.i <- rt[pic[,1]]
@@ -18,7 +18,7 @@ rtequal <- function(rt0,pics){
     pic[,2] <- int.i
     pics$pics[[i]] <- pic
   }
-  pics$rt <- rt0
+  pics$scantime <- rt0
   return(pics)
 }
 
@@ -35,7 +35,7 @@ PICset <- function(files, level, mztol=0.1, gap=3, width=5, min_snr=4, equal=TRU
 
   if (equal){
     pics <- parLapply(cl, res, function(pics){
-      rtequal(res[[1]]$rt,pics)
+      rtequal(res[[1]]$scantime,pics)
     })}
 
   stopCluster(cl)
@@ -55,7 +55,7 @@ PICset.kmeans <- function(files, level, mztol=0.1, gap=3, width=c(5,60), min_snr
 
   if (equal){
     pics <- parLapply(cl, res, function(pics){
-      rtequal(res[[1]]$rt,pics)
+      rtequal(res[[1]]$scantime,pics)
     })}
 
   stopCluster(cl)
@@ -111,5 +111,5 @@ PICset.getPeaks <- function(picset){
   for (i in 1:length(picset)){
     picset[[i]] <- getPeaks(picset[[i]])
   }
-  return(res)
+  return(picset)
 }
