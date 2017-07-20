@@ -75,6 +75,6 @@ PICgroup <- function(picset, tolerance=c(0.01,10),weight=c(0.8,0.2), method='sco
     }
   }
   peakmat <- cbind(peakmat,group)
-  return(list(peakmat=peakmat, picset=picset))
-  return(peakmat)
+  peakmat <- peakmat[peakmat[,'group']!=-1,]
+  return(list(peakmat=peakmat[,2:ncol(peakmat)], picset=picset))
 }

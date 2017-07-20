@@ -227,3 +227,100 @@ viewGroups <- function(groups){
   }
   shinyApp(ui = ui, server = server)
 }
+
+viewAlign <- function(groups_raw, groups_align){
+  library(shiny)
+  library(plotly)
+
+  .cal_mcc <- function(apics){
+    rpic <- apics[[1]]
+    ccs <- sapply(2:length(apics),function(s){
+      apic <- apics[[s]]
+      min_scan <- min(rpic[,1], apic[,1])
+      max_scan <- max(rpic[,1], apic[,1])
+
+      pic1 <- rep(0, max_scan-min_scan+1)
+      pic2 <- pic1
+
+      pic1[rpic[,1]-min_scan+1] <- pic1[rpic[,1]-min_scan+1] + rpic[,2]
+      pic2[apic[,1]-min_scan+1] <- pic2[apic[,1]-min_scan+1] + apic[,2]
+      return(cor(pic1, pic2))
+    })
+    return(mean(ccs))
+  }
+
+  ui <- fluidPage(
+    titlePanel("groups Viewer"),
+    sidebarLayout(
+      sidebarPanel(
+        sliderInput("inds",
+                    "index of group:",
+                    min = 1,
+                    max = max(groups_raw$peakmat[,'group']),
+                    value = 1,
+                    step=1)
+      ),
+      mainPanel(
+        h4 (textOutput("info"),
+            plotlyOutput("Plot"),
+            textOutput("mcc1"),
+            plotlyOutput("Plot1"),
+            textOutput("mcc2")
+        )
+      )
+    )
+  )
+
+  server <- function(input, output) {
+    output$Plot <- renderPlotly({
+      p <- plot_ly()
+      candidates <- groups_raw$peakmat[groups_raw$peakmat[,'group']==input$inds,]
+      for (i in 1:nrow(candidates)){
+        pic <- groups_raw$picset[[candidates[i,'sample']]]$pics[[candidates[i,'index']]]
+        p <- add_trace(p, x=pic[,1], y=pic[,2], type = 'scatter', mode = 'lines')
+      }
+      p
+    })
+
+    output$Plot1 <- renderPlotly({
+      p <- plot_ly()
+      candidates <- groups_align$peakmat[groups_align$peakmat[,'group']==input$inds,]
+      for (i in 1:nrow(candidates)){
+        pic <- groups_align$picset[[candidates[i,'sample']]]$pics[[candidates[i,'index']]]
+        p <- add_trace(p, x=pic[,1], y=pic[,2], type = 'scatter', mode = 'lines')
+      }
+      p
+    })
+
+    output$mcc1 <- renderText({
+      picset <- groups_raw$picset
+      gpi <- groups_raw$peakmat[groups_raw$peakmat[,'group']==input$inds,]
+      sams <- gpi[,'sample']
+      inds <- gpi[,'index']
+      apics <- lapply(1:nrow(gpi),function(s){
+        picset[[sams[s]]]$pics[[inds[s]]]
+      })
+      paste('The mcc of raw pics: ', round(.cal_mcc(apics),4))
+    })
+
+    output$mcc2 <- renderText({
+      picset <- groups_align$picset
+      gpi <- groups_align$peakmat[groups_align$peakmat[,'group']==input$inds,]
+      sams <- gpi[,'sample']
+      inds <- gpi[,'index']
+      apics <- lapply(1:nrow(gpi),function(s){
+        picset[[sams[s]]]$pics[[inds[s]]]
+      })
+      paste('The mcc of aligned pics: ', round(.cal_mcc(apics),4))
+    })
+
+    output$info <- renderText({
+      candidates <- groups_raw$peakmat[groups_raw$peakmat[,'group']==input$inds,]
+      mz_s <- min(candidates[,'mzmin'])
+      mz_e <- max(candidates[,'mzmax'])
+      paste('m/z from ', mz_s, 'to', mz_e)
+    })
+  }
+  shinyApp(ui = ui, server = server)
+
+}
