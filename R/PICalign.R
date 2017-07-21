@@ -1,4 +1,4 @@
-PICalign <- function(groups, method='fftcc', move='direct', span=1.5){
+PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
   peakmat <- groups$peakmat
   picset <- groups$picset
   rm(groups)

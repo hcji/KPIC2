@@ -28,5 +28,21 @@ LoadData <- function(filename)
   scanTime <- round(headerInfo$retentionTime[whMS1],3)
   # close(msobj)
 
-  return(list(mzs=Mat$mz,ints=Mat$intensity,scans=scans,times=scanTime))
+  return(list(path=filename, mzs=Mat$mz,ints=Mat$intensity,scans=scans,times=scanTime))
+}
+
+readPICs <- function(files){
+  library(rjson)
+  filepattern <- c("[j][s][o][n]")
+  filepattern <- paste(paste("\\.", filepattern, "$", sep = ""), collapse = "|")
+  info <- file.info(files)
+  listed <- list.files(files[info$isdir], pattern = filepattern,
+                       recursive = TRUE, full.names = TRUE)
+  
+  output <- list()
+  for (i in 1:length(listed)){
+    output[[i]] <- fromJSON(file=listed[i])
+    gc()
+  }
+  return(output)
 }

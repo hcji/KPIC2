@@ -26,12 +26,15 @@ peak_detection <- function(vec, min_snr, level=0){
   if (length(ridges$ridges_rows)<1){return(NULL)}
   peaks <- peaksPosition(vec, ridges, cwt2d)
   signals <- getSignal(cwt2d, ridges, peaks)
-  scales <- sca[1+signals$ridge_lens]
+  lens <- signals$ridge_lens
+  lens[lens<0] <- 0
+  scales <- sca[1+lens]
+  lens <- signals$ridge_lens
   signals <- signals$signals
   peaks <- peaks+1
   noises <- getNoise(peaks, cwt2d, ridges)
   snr <- (signals+10^-5)/(noises+10^-5)
-  refine <- snr>min_snr & scales>4 & vec[peaks]>level
+  refine <- snr>min_snr & lens>3 & vec[peaks]>level
 
   info <- cbind(peaks, scales, snr)
   info <- info[refine,]

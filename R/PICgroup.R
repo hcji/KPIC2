@@ -1,4 +1,4 @@
-PICgroup <- function(picset, tolerance=c(0.01,10),weight=c(0.8,0.2), method='score', frac=0.5){
+PICset.group <- function(picset, tolerance=c(0.01,10),weight=c(0.8,0.2), method='score', frac=0.5){
   library(dbscan)
   minSample = frac*length(picset)
   peakmat <- lapply(picset, function(pics){

@@ -1,10 +1,10 @@
-readfiles <- function(files, fullName=TRUE){
+readfiles <- function(files){
   filepattern <- c("[Cc][Dd][Ff]", "[Nn][Cc]", "([Mm][Zz])?[Xx][Mm][Ll]",
                    "[Mm][Zz][Dd][Aa][Tt][Aa]", "[Mm][Zz][Mm][Ll]")
   filepattern <- paste(paste("\\.", filepattern, "$", sep = ""), collapse = "|")
   info <- file.info(files)
   listed <- list.files(files[info$isdir], pattern = filepattern,
-                       recursive = TRUE, full.names = fullName)
+                       recursive = TRUE, full.names = TRUE)
   return(listed)
 }
 
@@ -22,43 +22,59 @@ rtequal <- function(rt0,pics){
   return(pics)
 }
 
-PICset <- function(files, level, mztol=0.1, gap=3, width=5, min_snr=4, equal=TRUE, ...){
+PICset <- function(files, level, mztol=0.1, gap=3, width=5, min_snr=4, equal=TRUE, export=FALSE, par=TRUE, ...){
   library(parallel)
-  cl <- makeCluster(getOption("cl.cores", detectCores(logical = TRUE)))
   path <- readfiles(files)
-  res <- parLapply(cl, path,function(filename){
-    raw <- LoadData(filename)
-    pics <- getPIC(raw, level, mztol, gap, width, min_snr)
-    pics$path=filename
-    return(pics)
-  })
+
+  if (par){
+    cl <- makeCluster(getOption("cl.cores", detectCores(logical = FALSE)))
+    res <- parLapply(cl, path,function(filename){
+      raw <- LoadData(filename)
+      pics <- getPIC(raw, level, mztol, gap, width, min_snr, export)
+      return(pics)
+    })
+    stopCluster(cl)
+  } else {
+    res <- lapply(path,function(filename){
+      raw <- LoadData(filename)
+      pics <- getPIC(raw, level, mztol, gap, width, min_snr, export)
+      return(pics)
+    })
+  }
 
   if (equal){
-    pics <- parLapply(cl, res, function(pics){
+    pics <- lapply(res, function(pics){
       rtequal(res[[1]]$scantime,pics)
     })}
 
-  stopCluster(cl)
   return(res)
 }
 
-PICset.kmeans <- function(files, level, mztol=0.1, gap=3, width=c(5,60), min_snr=4, alpha=0.3, equal=TRUE, ...){
+PICset.kmeans <- function(files, level, mztol=0.1, gap=3, width=c(5,60), min_snr=4, alpha=0.3, equal=TRUE, export=FALSE, par=TRUE, ...){
   library(parallel)
-  cl <- makeCluster(getOption("cl.cores", detectCores(logical = TRUE)))
+  cl <- makeCluster(getOption("cl.cores", detectCores(logical = FALSE)))
   path <- readfiles(files)
-  res <- parLapply(cl, path,function(filename){
-    raw <- LoadData(filename)
-    pics <- getPIC.kmeans(raw, level, mztol, gap, width, alpha, min_snr)
-    pics$path=filename
-    return(pics)
-  })
+
+  if (par){
+    res <- parLapply(cl, path,function(filename){
+      raw <- LoadData(filename)
+      pics <- getPIC.kmeans(raw, level, mztol, gap, width, alpha, min_snr, export)
+      return(pics)
+    })
+    stopCluster(cl)
+  } else {
+    res <- lapply(path,function(filename){
+      raw <- LoadData(filename)
+      pics <- getPIC.kmeans(raw, level, mztol, gap, width, alpha, min_snr, export)
+      return(pics)
+    })
+  }
 
   if (equal){
-    pics <- parLapply(cl, res, function(pics){
+    pics <- lapply(res, function(pics){
       rtequal(res[[1]]$scantime,pics)
     })}
 
-  stopCluster(cl)
   return(res)
 }
 

@@ -1,19 +1,19 @@
-\name{PICalign}
-\alias{PICalign}
+\name{PICset.align}
+\alias{PICset.align}
 
 \title{
 Align each group of PICs.
 }
 \description{
-This function is used to calculated the shifts of PICs in each group, and correct the retention times of the peakmat and picset obtain by \code{PICgroup} function.
+This function is used to calculated the shifts of PICs in each group, and correct the retention times of the peakmat and picset obtain by \code{PICset.group} function.
 }
 \usage{
-PICalign(groups, method = "fftcc", move = "direct", span = 1.5)
+PICset.align(groups, method = "fftcc", move = "direct", span = 1.5)
 }
 
 \arguments{
   \item{groups}{
-The result of \code{PICgroup} function.
+The result of \code{PICset.group} function.
 }
   \item{method}{
 Which method is used to calculated the shift. can be \code{'match'} of \code{'fftcc'}. \code{'match'} means calculating the difference of the retention time of detected peak position. \code{'fftcc'} means use fft cross correlation method to maximize the similarity of peak shape.

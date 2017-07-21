@@ -1,9 +1,10 @@
-getPIC <- function(raw, level, mztol=0.1, gap=3, width=5, min_snr=4, ...){
+getPIC <- function(raw, level, mztol=0.1, gap=3, width=5, min_snr=4, export='FALSE',...){
   orders <- order(raw$mzs)
   mzs <- raw$mzs[orders]
   scans <- raw$scans[orders]
   ints <- raw$ints[orders]
   scantime <- raw$times
+  path <- raw$path
   rm(raw)
 
   # set seeds
@@ -49,15 +50,25 @@ getPIC <- function(raw, level, mztol=0.1, gap=3, width=5, min_snr=4, ...){
   peaks <- peaks[nps>0]
   gc()
 
-  return(list(scantime=scantime, pics=pics, peaks=peaks))
+  output <- list(path=path, scantime=scantime, pics=pics, peaks=peaks)
+  if (export){
+    library(rjson)
+    exportJSON <- toJSON(output)
+    splitname <- strsplit(path,"\\.")[[1]][1]
+    outpath <- paste(splitname,'json',sep='.')
+    write(exportJSON,outpath)
+    gc()
+  }
+  return(output)
 }
 
-getPIC.kmeans <- function(raw, level, mztol=0.1, gap=3, width=c(5,60), alpha=0.3, min_snr=4, ...){
+getPIC.kmeans <- function(raw, level, mztol=0.1, gap=3, width=c(5,60), alpha=0.3, min_snr=4, export='FALSE', ...){
   orders <- order(raw$mzs)
   mzs <- raw$mzs[orders]
   scans <- raw$scans[orders]
   ints <- raw$ints[orders]
   scantime <- raw$times
+  path <- raw$path
   rm(raw)
 
   # set seeds
@@ -105,7 +116,15 @@ getPIC.kmeans <- function(raw, level, mztol=0.1, gap=3, width=c(5,60), alpha=0.3
   peaks <- peaks[nps>0]
   gc()
 
-  return(list(scantime=scantime, pics=pics, peaks=peaks))
+  output <- list(path=path, scantime=scantime, pics=pics, peaks=peaks)
+  if (export){
+    library(rjson)
+    exportJSON <- toJSON(output)
+    splitname <- strsplit(filename,"\\.")[[1]][1]
+    outpath <- paste(splitname,'json',sep='.')
+    write(exportJSON,outpath)
+  }
+  return(output)
 }
 
 .PICsplit <- function(peak,pic){
@@ -188,15 +207,19 @@ getPeaks <- function(pics){
   rt <- sapply(1:length(pics$pics),function(s){
     pics$scantime[pics$pics[[s]][peakpos[s],1]]
   })
-  rtmin <- sapply(pics$pics,function(pic){
-    pics$scantime[pic[1,1]]
-  })
-  rtmax <- sapply(pics$pics,function(pic){
-    pics$scantime[pic[nrow(pic),1]]
-  })
+
   maxo <- sapply(pics$pics,function(pic){
     max(pic[,2])
   })
+  
+  thr <- which(pic[,2]>0.3*maxo)
+  rtmin <- sapply(pics$pics,function(pic){
+    pics$scantime[pic[thr[1],1]]
+  })
+  rtmax <- sapply(pics$pics,function(pic){
+    pics$scantime[pic[thr[length(thr)],1]]
+  })
+  
   area <- sapply(pics$pics,function(pic){
     round(integration(pic[,1],pic[,2]))
   })

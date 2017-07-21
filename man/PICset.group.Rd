@@ -1,5 +1,5 @@
-\name{PICgroup}
-\alias{PICgroup}
+\name{PICset.group}
+\alias{PICset.group}
 
 \title{
 group the features
@@ -8,7 +8,7 @@ group the features
 This function is used to group the features across samples.
 }
 \usage{
-PICgroup(picset, tolerance = c(0.01, 10), weight = c(0.8, 0.2), method = "score", frac = 0.5)
+PICset.group(picset, tolerance = c(0.01, 10), weight = c(0.8, 0.2), method = "score", frac = 0.5)
 }
 
 \arguments{

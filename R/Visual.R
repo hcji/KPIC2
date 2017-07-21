@@ -273,7 +273,8 @@ viewAlign <- function(groups_raw, groups_align){
 
   server <- function(input, output) {
     output$Plot <- renderPlotly({
-      p <- plot_ly()
+      p <- plot_ly()%>%
+        layout(showlegend = FALSE)
       candidates <- groups_raw$peakmat[groups_raw$peakmat[,'group']==input$inds,]
       for (i in 1:nrow(candidates)){
         pic <- groups_raw$picset[[candidates[i,'sample']]]$pics[[candidates[i,'index']]]
@@ -283,7 +284,8 @@ viewAlign <- function(groups_raw, groups_align){
     })
 
     output$Plot1 <- renderPlotly({
-      p <- plot_ly()
+      p <- plot_ly()%>%
+        layout(showlegend = FALSE)
       candidates <- groups_align$peakmat[groups_align$peakmat[,'group']==input$inds,]
       for (i in 1:nrow(candidates)){
         pic <- groups_align$picset[[candidates[i,'sample']]]$pics[[candidates[i,'index']]]
