@@ -14,7 +14,8 @@ rtequal <- function(rt0,pics){
     pic <- pics$pics[[i]]
     rt.i <- rt[pic[,1]]
     rt0.i <- rt0[pic[,1]]
-    int.i <- approx(rt.i,pic[,2],rt0.i)$y
+    int.i <- approx(rt.i,pic[,2],rt0.i, rule=2)$y
+    int.i[is.na(int.i)] <- 0
     pic[,2] <- int.i
     pics$pics[[i]] <- pic
   }
@@ -43,7 +44,7 @@ PICset <- function(files, level, mztol=0.1, gap=3, width=5, min_snr=4, equal=TRU
   }
 
   if (equal){
-    pics <- lapply(res, function(pics){
+    res <- lapply(res, function(pics){
       rtequal(res[[1]]$scantime,pics)
     })}
 
@@ -71,7 +72,7 @@ PICset.kmeans <- function(files, level, mztol=0.1, gap=3, width=c(5,60), min_snr
   }
 
   if (equal){
-    pics <- lapply(res, function(pics){
+    res <- lapply(res, function(pics){
       rtequal(res[[1]]$scantime,pics)
     })}
 

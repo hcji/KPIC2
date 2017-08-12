@@ -212,12 +212,11 @@ getPeaks <- function(pics){
     max(pic[,2])
   })
   
-  thr <- which(pic[,2]>0.3*maxo)
   rtmin <- sapply(pics$pics,function(pic){
-    pics$scantime[pic[thr[1],1]]
+    pics$scantime[pic[1,1]]
   })
   rtmax <- sapply(pics$pics,function(pic){
-    pics$scantime[pic[thr[length(thr)],1]]
+    pics$scantime[pic[nrow(pic),1]]
   })
   
   area <- sapply(pics$pics,function(pic){

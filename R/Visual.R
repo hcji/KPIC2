@@ -324,5 +324,46 @@ viewAlign <- function(groups_raw, groups_align){
     })
   }
   shinyApp(ui = ui, server = server)
+}
 
+viewPseudospecturm <- function(groups){
+  library(shiny)
+  library(plotly)
+  
+  ui <- fluidPage(
+    titlePanel("Pseudospecturm Viewer"),
+    sidebarLayout(
+      sidebarPanel(
+        sliderInput("inds",
+                    "index of scan:",
+                    min = 1,
+                    max = max(groups$group.info[,'cluster']),
+                    value = 1,
+                    step=1)
+      ),
+      mainPanel(
+        h4(textOutput("caption")),
+        plotOutput("Plot"),
+        tableOutput("View")
+      )
+    )
+  )
+  
+  server <- function(input, output) {
+    output$caption <- renderText({
+      paste('Pseudospecturm of cluster: ', input$inds)
+    })
+    
+    output$Plot <- renderPlot({
+      spectrumA <- getPseudospecturm(groups, input$inds)
+      stem(spectrumA[,'mz'], spectrumA[,'intensity'])
+    })
+    
+    output$View <- renderTable({
+      spectrumA <- getPseudospecturm(groups, input$inds)
+      as.data.frame(spectrumA)
+    })
+  }
+  
+  shinyApp(ui = ui, server = server)
 }

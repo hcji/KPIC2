@@ -1,6 +1,7 @@
 PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
-  peakmat <- groups$peakmat
+  peakmat <- as.matrix(groups$peakmat)
   picset <- groups$picset
+  group.info <- groups$group.info
   rm(groups)
 
   ngroup <- max(peakmat[,'group'])
@@ -12,7 +13,9 @@ PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
   rt_mat <- matrix(NA, length(picset), ngroup)
   lag_mat <- matrix(NA, length(picset), ngroup)
   for (i in 1:(length(sp)-1)){
-    gpi <- peakmat[(sp[i]+1):sp[i+1],]
+    idss <- (sp[i]+1):sp[i+1]
+    if (length(idss)<2){next}
+    gpi <- peakmat[idss,]
 
     ref <- min(gpi[,'sample'])
     rr <- match(ref, gpi[,'sample'])
@@ -69,7 +72,7 @@ PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
       }
     }
   }
-  return(list(peakmat=peakmat, picset=picset))
+  return(list(group.info=group.info, peakmat=peakmat[,-1], picset=picset))
 }
 
 .align_fftcc <- function(rpic,apic){
