@@ -1,7 +1,7 @@
 PICset.group <- function(picset, tolerance=c(0.01,10),weight=c(0.8,0.2), method='score', frac=0.5){
   library(dbscan)
   library(data.table)
-  
+
   minSample = frac*length(picset)
   peakmat <- lapply(picset, function(pics){
     return(pics$peakinfo)
@@ -76,12 +76,12 @@ PICset.group <- function(picset, tolerance=c(0.01,10),weight=c(0.8,0.2), method=
       }
     }
   }
-  
+
   peakmat <- as.data.table(cbind(peakmat,group))
   setkey(peakmat, group)
-  
+
   splits <- lapply(1:group_id, function(s){
-    peakmat[.(s), nomatch=F]
+    peakmat[peakmat[,'group']==s,]
   })
   counts <- sapply(splits,nrow)
   group.id <- 1:length(splits)
@@ -95,27 +95,28 @@ PICset.group <- function(picset, tolerance=c(0.01,10),weight=c(0.8,0.2), method=
     round(mean(s$maxo))
   })
   finl <- which(counts>=minSample)
-  
+
   peakmat <- do.call(rbind, splits[finl])
   group.info <- cbind(group.id, group.rt, group.mz, mean.ints, counts)[finl,]
-  
+
   return(list(group.info=group.info, peakmat=peakmat[,-1], picset=picset))
 }
 
 groupCombine <- function(groups,min_corr=0.9,type='tailed',window=10){
   library(data.table)
+
   peakmat <- groups$peakmat
   picset <- groups$picset
   group.info <- groups$group.info
   rm(groups)
-  
+
   peakmat <- as.data.table(peakmat)
   setkey(peakmat, group)
-  
+
   cluster <- rep(0, nrow(group.info))
   corr <- rep(0, nrow(group.info))
   group.info <- data.table(1:nrow(group.info), group.info, cluster, corr)
-  
+
   cluster.id <- 1
   for(i in 1:nrow(group.info)){
     if (group.info[i, cluster]!=0){next}
@@ -126,35 +127,38 @@ groupCombine <- function(groups,min_corr=0.9,type='tailed',window=10){
         .mat.cor(group.matrix[[1]], group.matrix[[s]])
       })
       hits <- which(group.corrs >= min_corr)
-    } else {hits <- 1}
+    } else {
+      group.corrs <- 1
+      hits <- 1}
     hit.id <- unlist(candidate[hits,1])
     group.info[hit.id, 'cluster'] <- cluster.id
     group.info[hit.id, 'corr'] <- group.corrs[hits]
     cluster.id <- cluster.id + 1
   }
-  
+
   return(list(peakmat=peakmat, picset=picset, group.info=group.info[,-1]))
 }
 
 getPseudospecturm <- function(groups, clu.id){
+  library(data.table)
   peakmat <- groups$peakmat
   setkey(peakmat, group)
   group.info <- groups$group.info
   setkey(group.info, cluster)
   nsample <- length(groups$picset)
   rm(groups)
-  
+
   this.groups <- group.info[.(clu.id)]
   setorder(this.groups, group.mz)
   ints.mat <- matrix(NA, nsample, nrow(this.groups))
-  
+
   for (i in 1:nrow(this.groups)){
     group.id <- this.groups[i,'group.id']
     this.peaks <- peakmat[.(group.id)]
     sams <- this.peaks$sample
     ints.mat[sams,i] <- this.peaks$maxo
   }
-  
+
   ints.mat <- ints.mat/ints.mat[,1]
   intensity <- colMeans(ints.mat, na.rm=TRUE) * 100
   res <- cbind(this.groups$group.mz, this.groups$group.rt, this.groups$counts, this.groups$corr, intensity)
@@ -168,12 +172,12 @@ getPseudospecturm <- function(groups, clu.id){
   minScan <- Inf
   maxScan <- 0
   nsample <- length(picset)
-  
+
   for (i in 1:nrow(candidate)){
     group.id <- candidate[i,'group.id']
     this.peaks <- peakmat[.(group.id)]
     group.peaks[[i]] <- this.peaks
-    
+
     for (j in 1:nrow(this.peaks)){
       pa <- this.peaks$sample[j]
       pb <- this.peaks$index[j]
@@ -182,12 +186,12 @@ getPseudospecturm <- function(groups, clu.id){
       maxScan <- max(maxScan,pj)
     }
   }
-  
+
   nscan <- maxScan-minScan+1
   for (i in 1:nrow(candidate)){
     this.matrix <- matrix(0, nsample, nscan)
     this.peaks <- group.peaks[[i]]
-    
+
     for (j in 1:nrow(this.peaks)){
       pa <- this.peaks$sample[j]
       pb <- this.peaks$index[j]
@@ -203,10 +207,10 @@ getPseudospecturm <- function(groups, clu.id){
 .groupCandidate <- function(i, group.info, type, window){
   ref.mz <- as.numeric(group.info[i, 'group.mz'])
   ref.rt <- as.numeric(group.info[i, 'group.rt'])
-  
+
   min.rt <- ref.rt-0.5*window
   max.rt <- ref.rt+0.5*window
-  
+
   if (type == 'tailed'){
     min.mz <- ref.mz
     max.mz <- ref.mz + 0.05
@@ -217,7 +221,7 @@ getPseudospecturm <- function(groups, clu.id){
     min.mz <- 0
     max.mz <- Inf
   }
-  
+
   return(group.info[group.rt>=min.rt & group.rt<=max.rt][group.mz>=min.mz & group.mz<=max.mz][cluster==0])
 }
 

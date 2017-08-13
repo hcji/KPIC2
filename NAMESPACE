@@ -1,7 +1,8 @@
 exportPattern("LoadData","getPIC","getPIC.kmeans","getPIP","getPIP.kmeans","PICset","PICset.kmeans",
               "getTICs","viewTICs","getMS","viewMS","viewPICs","PICsplit","getPeaks","viewGroups",
               "PICresolve","PICfit","PICset.split","PICset.resolve","PICset.getPeaks","PICgroup",
-              "PICset.fit","PICalign","viewAlign","readPICs")
-importFrom(Rcpp, evalCpp)
+              "PICset.fit","PICalign","viewAlign","readPICs","groupCombine","analyst.RF","analyst.OPLS",
+              "viewPseudospecturm")
+importFrom(Rcpp, evalCpp, data.table)
 importFrom("stats", "approx", "fft", "median", "mvfft", "quantile", "sd")
 useDynLib(KPIC)

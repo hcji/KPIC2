@@ -232,23 +232,6 @@ viewAlign <- function(groups_raw, groups_align){
   library(shiny)
   library(plotly)
 
-  .cal_mcc <- function(apics){
-    rpic <- apics[[1]]
-    ccs <- sapply(2:length(apics),function(s){
-      apic <- apics[[s]]
-      min_scan <- min(rpic[,1], apic[,1])
-      max_scan <- max(rpic[,1], apic[,1])
-
-      pic1 <- rep(0, max_scan-min_scan+1)
-      pic2 <- pic1
-
-      pic1[rpic[,1]-min_scan+1] <- pic1[rpic[,1]-min_scan+1] + rpic[,2]
-      pic2[apic[,1]-min_scan+1] <- pic2[apic[,1]-min_scan+1] + apic[,2]
-      return(cor(pic1, pic2))
-    })
-    return(mean(ccs))
-  }
-
   ui <- fluidPage(
     titlePanel("groups Viewer"),
     sidebarLayout(
@@ -329,7 +312,7 @@ viewAlign <- function(groups_raw, groups_align){
 viewPseudospecturm <- function(groups){
   library(shiny)
   library(plotly)
-  
+
   ui <- fluidPage(
     titlePanel("Pseudospecturm Viewer"),
     sidebarLayout(
@@ -348,22 +331,22 @@ viewPseudospecturm <- function(groups){
       )
     )
   )
-  
+
   server <- function(input, output) {
     output$caption <- renderText({
       paste('Pseudospecturm of cluster: ', input$inds)
     })
-    
+
     output$Plot <- renderPlot({
       spectrumA <- getPseudospecturm(groups, input$inds)
       stem(spectrumA[,'mz'], spectrumA[,'intensity'])
     })
-    
+
     output$View <- renderTable({
       spectrumA <- getPseudospecturm(groups, input$inds)
       as.data.frame(spectrumA)
     })
   }
-  
+
   shinyApp(ui = ui, server = server)
 }

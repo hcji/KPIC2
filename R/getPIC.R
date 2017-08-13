@@ -211,16 +211,16 @@ getPeaks <- function(pics){
   maxo <- sapply(pics$pics,function(pic){
     max(pic[,2])
   })
-  
+
   rtmin <- sapply(pics$pics,function(pic){
     pics$scantime[pic[1,1]]
   })
   rtmax <- sapply(pics$pics,function(pic){
     pics$scantime[pic[nrow(pic),1]]
   })
-  
+
   area <- sapply(pics$pics,function(pic){
-    round(integration(pic[,1],pic[,2]))
+    round(integration(pics$scantime[pic[,1]],pic[,2]))
   })
 
   mzinfo <- round(do.call(rbind,mzinfo),4)

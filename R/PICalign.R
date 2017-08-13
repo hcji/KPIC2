@@ -49,7 +49,7 @@ PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
         picset[[sams[k]]]$pics[[inds[k]]] <- apics[[k]]
         picset[[sams[k]]]$peakinfo[inds[k],'rt'] <- picset[[sams[k]]]$peakinfo[inds[k],'rt'] + lags[k]*freq
       }
-      peakmat[gpi[,'id'],'rt'] <- peakmat[gpi[,'id'],'rt'] + lags*freq
+      peakmat[gpi[,'id'],c('rt','rtmin','rtmax')] <- peakmat[gpi[,'id'],c('rt','rtmin','rtmax')] + lags*freq
     }
   }
 
@@ -64,7 +64,7 @@ PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
       lag_p <- round(predict(mod, x=peakinfoj[,'rt']))
       lag_rt <- freq*lag_p
 
-      peakinfoj[,'rt'] <- peakinfoj[,'rt']+lag_rt
+      peakinfoj[,c('rt','rtmin','rtmax')] <- peakinfoj[,c('rt','rtmin','rtmax')]+lag_rt
       peakmat[indj,] <- peakinfoj
       for (k in 1:nrow(peakinfoj)){
         picset[[j]]$pics[[peakinfoj[k,'index']]][,1] <- picset[[j]]$pics[[peakinfoj[k,'index']]][,1] + lag_p[k]
@@ -91,6 +91,14 @@ PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
 
 .fftcc <- function(align, ref){
   M <- length(ref)
+  diffs <- 2^(1:20)-M
+  diffs[diffs<0] <- Inf
+  curdiff <- diffs[which.min(diffs)]
+
+  ref <- c(ref, rep(0,curdiff))
+  align <- c(align, rep(0,curdiff))
+  M <- M+curdiff
+
   X <- fft(ref)
   Y <- fft(align)
   R <- X*Conj(Y)
@@ -112,3 +120,36 @@ PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
   return(lag)
 }
 
+.cal_mcc <- function(apics){
+  rpic <- apics[[1]]
+  ccs <- sapply(2:length(apics),function(s){
+    apic <- apics[[s]]
+    min_scan <- min(rpic[,1], apic[,1])
+    max_scan <- max(rpic[,1], apic[,1])
+
+    pic1 <- rep(0, max_scan-min_scan+1)
+    pic2 <- pic1
+
+    pic1[rpic[,1]-min_scan+1] <- pic1[rpic[,1]-min_scan+1] + rpic[,2]
+    pic2[apic[,1]-min_scan+1] <- pic2[apic[,1]-min_scan+1] + apic[,2]
+    return(cor(pic1, pic2))
+  })
+  return(mean(ccs))
+}
+
+.groups_mcc <- function(groups){
+  group.info <- groups$group.info
+  peakmat <- as.data.frame(groups$peakmat)
+  picset <- groups$picset
+  mccs <- sapply(group.info[,'group.id'], function(s){
+    peaks <- peakmat[peakmat[,'group']==s,]
+    apics <- lapply(1:nrow(peaks), function(n){
+      a <- as.numeric(peaks[n,'sample'])
+      b <- as.numeric(peaks[n,'index'])
+      picset[[a]]$pics[[b]]
+    })
+    .cal_mcc(apics)
+  })
+  res <- cbind(group.info, mccs)
+  return(res)
+}
