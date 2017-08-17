@@ -8,7 +8,7 @@ Process a set of sample with \code{getPIC} method.
 This function is used to process a dataset produced by LC-MS.
 }
 \usage{
-PICset(files, level, mztol = 0.1, gap = 3, width = 5, min_snr = 4, equal = TRUE, ...)
+PICset(files, level, mztol = 0.1, gap = 3, width = 5, min_snr = 4, equal = TRUE, export=FALSE, par=TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -32,6 +32,12 @@ see \code{getPIC}
 }
   \item{equal}{
 Whether the retention times of samples are equaled or not. Equalization is need for alignment procedure.
+}
+  \item{export}{
+Whether to export PICs of each sample as single files
+}
+  \item{par}{
+Whether to use multi-core calculation
 }
   \item{\dots}{
 see \code{getPIC}

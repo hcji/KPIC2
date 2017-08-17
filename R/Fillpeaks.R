@@ -17,7 +17,7 @@ getDataMatrix <- function(groups, std='maxo'){
     str1 <- unlist(strsplit(path, '/'))
     str1 <- str1[length(str1)]
     str2 <- strsplit(str1,'\\.')
-    str2 <- str2[1]
+    str2 <- str2[[1]][1]
     sample.name <- c(sample.name, str2)
   }
 

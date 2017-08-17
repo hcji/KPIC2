@@ -12,6 +12,10 @@ PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
 
   rt_mat <- matrix(NA, length(picset), ngroup)
   lag_mat <- matrix(NA, length(picset), ngroup)
+  weights <- rep(0, ngroup)
+  weights[group.info[,'group.id']] <- group.info[,'mean.ints']
+  weights <- weights/sum(weights)
+
   for (i in 1:(length(sp)-1)){
     idss <- (sp[i]+1):sp[i+1]
     if (length(idss)<2){next}
@@ -57,14 +61,14 @@ PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
     for (j in 1:nrow(lag_mat)){
       x = rt_mat[j,]
       y = lag_mat[j,]
-      mod <- loess(y~x, span=span)
+      mod <- loess(y~x, span=span, weights=weights)
       indj <- peakmat[,'sample']==j
       peakinfoj <- peakmat[indj,]
 
       lag_p <- round(predict(mod, x=peakinfoj[,'rt']))
       lag_rt <- freq*lag_p
 
-      peakinfoj[,c('rt','rtmin','rtmax')] <- peakinfoj[,c('rt','rtmin','rtmax')]+lag_rt
+      peakinfoj[,c('rt','rtmin','rtmax')] <- peakinfoj[,c('rt','rtmin','rtmax')]+ data.frame(lag_rt,lag_rt,lag_rt)
       peakmat[indj,] <- peakinfoj
       for (k in 1:nrow(peakinfoj)){
         picset[[j]]$pics[[peakinfoj[k,'index']]][,1] <- picset[[j]]$pics[[peakinfoj[k,'index']]][,1] + lag_p[k]

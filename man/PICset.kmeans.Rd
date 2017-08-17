@@ -8,7 +8,7 @@ Process a set of sample with \code{getPIC.kmeans} method.
 This function is used to process a dataset produced by LC-MS.
 }
 \usage{
-PICset.kmeans(files, level, mztol = 0.1, gap = 3, width = c(5, 60), min_snr = 4, alpha = 0.3, equal = TRUE, ...)
+PICset.kmeans(files, level, mztol = 0.1, gap = 3, width = c(5, 60), min_snr = 4, alpha = 0.3, equal = TRUE, export=FALSE, par=TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -35,6 +35,12 @@ see \code{getPIC.kmeans}
 }
   \item{equal}{
 Whether the retention times of samples are equaled or not. Equalization is need for alignment procedure.
+}
+  \item{export}{
+Whether to export PICs of each sample as single files
+}
+  \item{par}{
+Whether to use multi-core calculation
 }
   \item{\dots}{
 see \code{getPIC.kmeans}

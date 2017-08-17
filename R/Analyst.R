@@ -3,12 +3,18 @@ analyst.RF <- function(labels, data){
   library(plotly)
   library(randomForest)
 
+  labels <- as.factor(labels)
+  data <- as.matrix(data)
+
   ui <- fluidPage(
     titlePanel("Random Forest"),
     sidebarLayout(
       sidebarPanel(
         numericInput("trees", "Number of trees to grow:", 100),
-        numericInput("nodes", "Maximum number of nodes:", 5)
+        numericInput("nodes", "Maximum number of nodes:", 5),
+        selectInput("normalization", "Normalization:", choices=c('None','Sum','Interior Label')),
+        selectInput("scaling", "Scale:", choices=c('center','scale','auto-scaling')),
+        numericInput("interior", "Index of Interior Label (only for normalization with interior babel):", 1)
       ),
       mainPanel(
         h4 ("Confusion Matrix"),
@@ -23,6 +29,26 @@ analyst.RF <- function(labels, data){
 
   server <- function(input, output) {
     model <- reactive({
+      ColNames <- paste('mz:', data['mz',], 'rt:', data['rt',])
+      data <- data[-(1:6),]
+      colnames(data) <- ColNames
+
+      if (input$normalization=='Sum'){
+        sums <- rowSums(data)
+        data <- t(t(data)/sums)
+      }else if (input$normalization=='Interior Label'){
+        interior <- data[,input$interior]
+        data <- t(t(data)/interior)
+      }
+
+      if (input$scaling == 'center'){
+        data <- scale(data, center=TRUE, scale=FALSE)
+      } else if (input$scaling == 'scale'){
+        data <- scale(data, center=FALSE, scale=TRUE)
+      } else if (input$scaling == 'auto-scaling'){
+        data <- scale(data, center=TRUE, scale=TRUE)
+      }
+
       randomForest(data, labels, ntree=input$trees, maxnodes=input$nodes,
                    importance=TRUE, proximity=TRUE)
     })
@@ -60,7 +86,10 @@ analyst.OPLS <- function(labels, data){
       sidebarPanel(
         numericInput("predI", "Number of components:", 2),
         numericInput("orthoI", "Number of orthogonal components (for OPLS only):", 1),
-        selectInput("method", "Method:", choices=c('PLS','OPLS'))
+        selectInput("method", "Method:", choices=c('PLS','OPLS')),
+        selectInput("normalization", "Normalization:", choices=c('Sum','Interior Label')),
+        selectInput("scaling", "Scale:", choices=c('none','center','scale','auto-scaling')),
+        numericInput("interior", "Index of Interior Label (only for normalization with interior babel):", 1)
       ),
       mainPanel(
         h4 ("Overview"),
@@ -75,6 +104,27 @@ analyst.OPLS <- function(labels, data){
 
   server <- function(input, output) {
     model <- reactive({
+
+      ColNames <- paste('mz:', data['mz',], 'rt:', data['rt',])
+      data <- data[-(1:6),]
+      colnames(data) <- ColNames
+
+      if (input$normalization=='Sum'){
+        sums <- rowSums(data)
+        data <- t(t(data)/sums)
+      }else if (input$normalization=='Interior Label'){
+        interior <- data[,input$interior]
+        data <- t(t(data)/interior)
+      }
+
+      if (input$scaling == 'center'){
+        data <- scale(data, center=TRUE, scale=FALSE)
+      } else if (input$scaling == 'scale'){
+        data <- scale(data, center=FALSE, scale=TRUE)
+      } else if (input$scaling == 'auto-scaling'){
+        data <- scale(data, center=TRUE, scale=TRUE)
+      }
+
       if (input$method == 'PLS') {
         f <- opls(data, labels, predI=input$predI)
       } else if (input$method == 'OPLS'){

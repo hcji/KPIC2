@@ -231,6 +231,12 @@ viewGroups <- function(groups){
 viewAlign <- function(groups_raw, groups_align){
   library(shiny)
   library(plotly)
+  library(data.table)
+
+  peakmat_raw <- as.data.table(groups_raw$peakmat)
+  setkey(peakmat_raw, group)
+  peakmat_align <- as.data.table(groups_align$peakmat)
+  setkey(peakmat_align, group)
 
   ui <- fluidPage(
     titlePanel("groups Viewer"),
@@ -255,12 +261,22 @@ viewAlign <- function(groups_raw, groups_align){
   )
 
   server <- function(input, output) {
+    candidates_raw <- reactive({
+      peakmat_raw[.(input$inds)]
+    })
+
+    candidates_align <- reactive({
+      peakmat_align[.(input$inds)]
+    })
+
     output$Plot <- renderPlotly({
       p <- plot_ly()%>%
         layout(showlegend = FALSE)
-      candidates <- groups_raw$peakmat[groups_raw$peakmat[,'group']==input$inds,]
+      candidates <- candidates_raw()
       for (i in 1:nrow(candidates)){
-        pic <- groups_raw$picset[[candidates[i,'sample']]]$pics[[candidates[i,'index']]]
+        a <- as.numeric(candidates[i,'sample'])
+        b <- as.numeric(candidates[i,'index'])
+        pic <- groups_raw$picset[[a]]$pics[[b]]
         p <- add_trace(p, x=pic[,1], y=pic[,2], type = 'scatter', mode = 'lines')
       }
       p
@@ -269,9 +285,11 @@ viewAlign <- function(groups_raw, groups_align){
     output$Plot1 <- renderPlotly({
       p <- plot_ly()%>%
         layout(showlegend = FALSE)
-      candidates <- groups_align$peakmat[groups_align$peakmat[,'group']==input$inds,]
+      candidates <- candidates_align()
       for (i in 1:nrow(candidates)){
-        pic <- groups_align$picset[[candidates[i,'sample']]]$pics[[candidates[i,'index']]]
+        a <- as.numeric(candidates[i,'sample'])
+        b <- as.numeric(candidates[i,'index'])
+        pic <- groups_align$picset[[a]]$pics[[b]]
         p <- add_trace(p, x=pic[,1], y=pic[,2], type = 'scatter', mode = 'lines')
       }
       p
@@ -279,9 +297,9 @@ viewAlign <- function(groups_raw, groups_align){
 
     output$mcc1 <- renderText({
       picset <- groups_raw$picset
-      gpi <- groups_raw$peakmat[groups_raw$peakmat[,'group']==input$inds,]
-      sams <- gpi[,'sample']
-      inds <- gpi[,'index']
+      gpi <- candidates_raw()
+      sams <- unlist(gpi[,'sample'])
+      inds <- unlist(gpi[,'index'])
       apics <- lapply(1:nrow(gpi),function(s){
         picset[[sams[s]]]$pics[[inds[s]]]
       })
@@ -290,9 +308,9 @@ viewAlign <- function(groups_raw, groups_align){
 
     output$mcc2 <- renderText({
       picset <- groups_align$picset
-      gpi <- groups_align$peakmat[groups_align$peakmat[,'group']==input$inds,]
-      sams <- gpi[,'sample']
-      inds <- gpi[,'index']
+      gpi <- candidates_align()
+      sams <- unlist(gpi[,'sample'])
+      inds <- unlist(gpi[,'index'])
       apics <- lapply(1:nrow(gpi),function(s){
         picset[[sams[s]]]$pics[[inds[s]]]
       })
@@ -300,7 +318,7 @@ viewAlign <- function(groups_raw, groups_align){
     })
 
     output$info <- renderText({
-      candidates <- groups_raw$peakmat[groups_raw$peakmat[,'group']==input$inds,]
+      candidates <- candidates_raw()
       mz_s <- min(candidates[,'mzmin'])
       mz_e <- max(candidates[,'mzmax'])
       paste('m/z from ', mz_s, 'to', mz_e)

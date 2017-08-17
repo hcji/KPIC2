@@ -81,7 +81,7 @@ PICset.group <- function(picset, tolerance=c(0.01,10),weight=c(0.8,0.2), method=
   setkey(peakmat, group)
 
   splits <- lapply(1:group_id, function(s){
-    peakmat[peakmat[,'group']==s,]
+    peakmat[.(s),]
   })
   counts <- sapply(splits,nrow)
   group.id <- 1:length(splits)

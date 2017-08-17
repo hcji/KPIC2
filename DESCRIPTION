@@ -8,5 +8,5 @@ Description: KPIC2 is an effective platform for LC-MS based metabolomics using p
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
-Imports: Rcpp (>= 0.12.11), RcppArmadillo (>= 0.7.900.2.0), mzR (>= 2.10.0), parallel (>= 3.4.0), shiny (>= 1.0.3), plotly (>= 4.7.0)
+Imports: Rcpp, RcppArmadillo, mzR, parallel, shiny, plotly, data.table, GA, IRanges, dbscan
 LinkingTo: Rcpp, RcppArmadillo
