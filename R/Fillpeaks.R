@@ -54,7 +54,7 @@ fillPeaks.EIBPC <- function(groups, extand_mz=20, extand_rt=5, min_snr=3, std='m
     blank <- which(data.mat[i+6,]==0)
     if (length(blank)<1){next}
     path <- groups$picset[[i]]$path
-    cat(paste('filling peaks of', path))
+    cat(paste('filling peaks of', path, '\n'))
     raw <- LoadData(path)
     for (j in blank){
       rtrange <- c(data.mat['rtmin',j]-extand_rt, data.mat['rtmax',j]+extand_rt)

@@ -63,40 +63,56 @@ getPIC <- function(raw, level, mztol=0.1, gap=3, width=5, min_snr=4, export='FAL
 }
 
 getPIC.kmeans <- function(raw, level, mztol=0.1, gap=3, width=c(5,60), alpha=0.3, min_snr=4, export='FALSE', ...){
+  library(Ckmeans.1d.dp)
+  library(data.table)
+
   orders <- order(raw$mzs)
   mzs <- raw$mzs[orders]
   scans <- raw$scans[orders]
   ints <- raw$ints[orders]
+  notused <- rep(TRUE, length(ints))
   scantime <- raw$times
   path <- raw$path
   rm(raw)
 
   # set seeds
   scanwidth <- as.integer(width/mean(diff(scantime[scantime>0])))
+  min_width <- scanwidth[1]
+  max_width <- scanwidth[2]
   seeds <- which(ints>level)
   seeds <- seeds[order(-ints[seeds])]
-  clu <- rep(0, length(ints))
 
   # detect pics
-  clu <- getPIP_kmeans(seeds, scans, mzs, ints, clu, mztol, gap, scanwidth[1], scanwidth[2], alpha)
-  orders <- order(clu)
-  clu <- clu[orders]
-  mzs <- mzs[orders]
-  scans <- scans[orders]
-  ints <- ints[orders]
+  pics <- list()
+  for (seed in seeds){
+    if (!notused[seed]){next}
+    ref_mz <- mzs[seed]
+    ref_scan <- scans[seed]
+    ref_int <- ints[seed]
 
-  picind <- c(findInterval(0:max(clu),clu))
-  pics <- lapply(1:(length(picind)-1),function(s){
-    pic <- cbind(scans[(picind[s]+1):picind[s+1]],ints[(picind[s]+1):picind[s+1]],mzs[(picind[s]+1):picind[s+1]])
-    pic <- pic[order(pic[,1]),]
-    return(pic)
-  })
-  pic_length <- unlist(sapply(pics,length))
-  pics <- pics[pic_length>3*scanwidth[1]]
+    roi <- 1+getROI(seed, scans, mzs, ints, notused, mztol, max_width)
+    roi_mzs <- mzs[roi]
+
+    diffs <- (roi_mzs-ref_mz)^2
+    clu.res <- Ckmeans.1d.dp(diffs, c(1,5))
+    sel_id <- roi[which(clu.res$cluster==which.min(clu.res$centers))]
+    sel_mz <- mzs[sel_id]
+    sel_scan <- scans[sel_id]
+    sel_ints <- ints[sel_id]
+
+    pic_id <- unique(collectPIC(ref_scan, ref_mz, ref_int, sel_id, sel_scan, sel_mz, sel_ints, gap, alpha))
+    notused[pic_id] <- FALSE
+    pic <- data.frame(scans[pic_id], ints[pic_id], mzs[pic_id])
+    pics <- c(pics, list(pic))
+  }
+  gc()
+
+  pic_length <- unlist(sapply(pics,nrow))
+  pics <- pics[pic_length>scanwidth[1]]
 
   # interpolation of missing points of pic
   pics <- lapply(pics,function(pic){
-    scan <- pic[1,1]:pic[nrow(pic),1]
+    scan <- min(pic[,1]):max(pic[,1])
     int <- approx(pic[,1],pic[,2],scan)$y
     mz <- rep(NA,length(scan))
     mz[pic[,1]%in%scan] <- pic[,3]

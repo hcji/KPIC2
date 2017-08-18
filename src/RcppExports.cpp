@@ -22,23 +22,39 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// getPIP_kmeans
-IntegerVector getPIP_kmeans(IntegerVector seeds, IntegerVector scans, NumericVector mzs, NumericVector ints, IntegerVector clu, double mztol, int gap, int min_width, int max_width, double alpha);
-RcppExport SEXP KPIC_getPIP_kmeans(SEXP seedsSEXP, SEXP scansSEXP, SEXP mzsSEXP, SEXP intsSEXP, SEXP cluSEXP, SEXP mztolSEXP, SEXP gapSEXP, SEXP min_widthSEXP, SEXP max_widthSEXP, SEXP alphaSEXP) {
+// getROI
+IntegerVector getROI(int seed, IntegerVector scans, NumericVector mzs, NumericVector ints, LogicalVector notused, double mztol, int max_width);
+RcppExport SEXP KPIC_getROI(SEXP seedSEXP, SEXP scansSEXP, SEXP mzsSEXP, SEXP intsSEXP, SEXP notusedSEXP, SEXP mztolSEXP, SEXP max_widthSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type seeds(seedsSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type scans(scansSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type mzs(mzsSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type ints(intsSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type clu(cluSEXP);
+    Rcpp::traits::input_parameter< LogicalVector >::type notused(notusedSEXP);
     Rcpp::traits::input_parameter< double >::type mztol(mztolSEXP);
-    Rcpp::traits::input_parameter< int >::type gap(gapSEXP);
-    Rcpp::traits::input_parameter< int >::type min_width(min_widthSEXP);
     Rcpp::traits::input_parameter< int >::type max_width(max_widthSEXP);
+    rcpp_result_gen = Rcpp::wrap(getROI(seed, scans, mzs, ints, notused, mztol, max_width));
+    return rcpp_result_gen;
+END_RCPP
+}
+// collectPIC
+IntegerVector collectPIC(int refScan, double refMz, double refInt, IntegerVector sel_id, IntegerVector sel_scan, NumericVector sel_mz, NumericVector sel_ints, int gap, double alpha);
+RcppExport SEXP KPIC_collectPIC(SEXP refScanSEXP, SEXP refMzSEXP, SEXP refIntSEXP, SEXP sel_idSEXP, SEXP sel_scanSEXP, SEXP sel_mzSEXP, SEXP sel_intsSEXP, SEXP gapSEXP, SEXP alphaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type refScan(refScanSEXP);
+    Rcpp::traits::input_parameter< double >::type refMz(refMzSEXP);
+    Rcpp::traits::input_parameter< double >::type refInt(refIntSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type sel_id(sel_idSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type sel_scan(sel_scanSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type sel_mz(sel_mzSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type sel_ints(sel_intsSEXP);
+    Rcpp::traits::input_parameter< int >::type gap(gapSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(getPIP_kmeans(seeds, scans, mzs, ints, clu, mztol, gap, min_width, max_width, alpha));
+    rcpp_result_gen = Rcpp::wrap(collectPIC(refScan, refMz, refInt, sel_id, sel_scan, sel_mz, sel_ints, gap, alpha));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -146,7 +162,8 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"KPIC_getPIP", (DL_FUNC) &KPIC_getPIP, 6},
-    {"KPIC_getPIP_kmeans", (DL_FUNC) &KPIC_getPIP_kmeans, 10},
+    {"KPIC_getROI", (DL_FUNC) &KPIC_getROI, 7},
+    {"KPIC_collectPIC", (DL_FUNC) &KPIC_collectPIC, 9},
     {"KPIC_findCandidate", (DL_FUNC) &KPIC_findCandidate, 8},
     {"KPIC_waveft", (DL_FUNC) &KPIC_waveft, 2},
     {"KPIC_cwtft", (DL_FUNC) &KPIC_cwtft, 1},

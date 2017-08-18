@@ -40,7 +40,7 @@
 
     groups_raw <- PICset.group(PICS, tolerance = c(0.1, 20))
     groups_align <- PICset.align(groups_raw, method='fftcc',move='loess')
-    groups_align <- PICset.group(groups_align, tolerance = c(0.1, 20))
+    groups_align <- PICset.group(groups_align$picset, tolerance = c(0.1, 20))
 	groups_align <- PICset.align(groups_align, method='fftcc',move='direct')
     viewAlign(groups_raw, groups_align)
     
@@ -66,7 +66,7 @@
   Finding the difference between two class. random forest is used for the example.
 
     labels <- c(rep(1,6), rep(2,6))
-    analyst.RF(labels, data)
+    analyst.RF(labels, data$data.mat)
 
 ## Contact
   For any questions, please contact:  ji.hongchao@foxmail.com

@@ -1,4 +1,4 @@
-exportPattern("LoadData","getPIC","getPIC.kmeans","getPIP","getPIP.kmeans","PICset","PICset.kmeans",
+exportPattern("LoadData","getPIC","getPIC.kmeans","getPIP","PICset","PICset.kmeans",
               "getTICs","viewTICs","getMS","viewMS","viewPICs","PICsplit","getPeaks","viewGroups",
               "PICresolve","PICfit","PICset.split","PICset.resolve","PICset.getPeaks","PICgroup",
               "PICset.fit","PICalign","viewAlign","readPICs","groupCombine","analyst.RF","analyst.OPLS",

@@ -104,7 +104,6 @@ analyst.OPLS <- function(labels, data){
 
   server <- function(input, output) {
     model <- reactive({
-
       ColNames <- paste('mz:', data['mz',], 'rt:', data['rt',])
       data <- data[-(1:6),]
       colnames(data) <- ColNames

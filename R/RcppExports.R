@@ -5,8 +5,12 @@ getPIP <- function(seeds, scans, mzs, clu, mztol, gap) {
     .Call('KPIC_getPIP', PACKAGE = 'KPIC', seeds, scans, mzs, clu, mztol, gap)
 }
 
-getPIP_kmeans <- function(seeds, scans, mzs, ints, clu, mztol, gap, min_width, max_width, alpha) {
-    .Call('KPIC_getPIP_kmeans', PACKAGE = 'KPIC', seeds, scans, mzs, ints, clu, mztol, gap, min_width, max_width, alpha)
+getROI <- function(seed, scans, mzs, ints, notused, mztol, max_width) {
+    .Call('KPIC_getROI', PACKAGE = 'KPIC', seed, scans, mzs, ints, notused, mztol, max_width)
+}
+
+collectPIC <- function(refScan, refMz, refInt, sel_id, sel_scan, sel_mz, sel_ints, gap, alpha) {
+    .Call('KPIC_collectPIC', PACKAGE = 'KPIC', refScan, refMz, refInt, sel_id, sel_scan, sel_mz, sel_ints, gap, alpha)
 }
 
 findCandidate <- function(ind, mzmin, mzmax, rtmin, rtmax, mz, rt, group) {

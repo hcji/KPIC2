@@ -1,4 +1,5 @@
 PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
+  library(data.table)
   peakmat <- as.matrix(groups$peakmat)
   picset <- groups$picset
   group.info <- groups$group.info
@@ -51,7 +52,7 @@ PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
       for (k in 1:length(apics)){
         apics[[k]][,1] <- apics[[k]][,1] + lags[k]
         picset[[sams[k]]]$pics[[inds[k]]] <- apics[[k]]
-        picset[[sams[k]]]$peakinfo[inds[k],'rt'] <- picset[[sams[k]]]$peakinfo[inds[k],'rt'] + lags[k]*freq
+        picset[[sams[k]]]$peakinfo[inds[k], c('rt','rtmin','rtmax')] <- picset[[sams[k]]]$peakinfo[inds[k], c('rt','rtmin','rtmax')] + lags[k]*freq
       }
       peakmat[gpi[,'id'],c('rt','rtmin','rtmax')] <- peakmat[gpi[,'id'],c('rt','rtmin','rtmax')] + lags*freq
     }
@@ -68,15 +69,15 @@ PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
       lag_p <- round(predict(mod, x=peakinfoj[,'rt']))
       lag_rt <- freq*lag_p
 
-      peakinfoj[,c('rt','rtmin','rtmax')] <- peakinfoj[,c('rt','rtmin','rtmax')]+ data.frame(lag_rt,lag_rt,lag_rt)
+      peakinfoj[,c('rt','rtmin','rtmax')] <- peakinfoj[,c('rt','rtmin','rtmax')]+ lag_rt
       peakmat[indj,] <- peakinfoj
       for (k in 1:nrow(peakinfoj)){
         picset[[j]]$pics[[peakinfoj[k,'index']]][,1] <- picset[[j]]$pics[[peakinfoj[k,'index']]][,1] + lag_p[k]
-        picset[[j]]$peakinfo[peakinfoj[k,'index'],'rt'] <- picset[[j]]$peakinfo[peakinfoj[k,'index'],'rt'] + lag_rt[k]
+        picset[[j]]$peakinfo[peakinfoj[k,'index'], c('rt','rtmin','rtmax')] <- picset[[j]]$peakinfo[peakinfoj[k,'index'], c('rt','rtmin','rtmax')] + lag_rt[k]
       }
     }
   }
-  return(list(group.info=group.info, peakmat=peakmat[,-1], picset=picset))
+  return(list(group.info=group.info, peakmat=as.data.table(peakmat[,-1]), picset=picset))
 }
 
 .align_fftcc <- function(rpic,apic){
