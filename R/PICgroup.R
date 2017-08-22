@@ -34,6 +34,7 @@ PICset.group <- function(picset, tolerance=c(0.01,10),weight=c(0.8,0.2), method=
     rt_ref <- as.numeric(peakmat[i,'rt'])
 
     candidates <- findCandidate(i, mz_s, mz_e, rt_s, rt_e, peakmat[,'mz'], peakmat[,'rt'], group)
+    if (is.null(candidates)){next}
 
     if (length(candidates)<minSample) {
       group[candidates] <- -1
