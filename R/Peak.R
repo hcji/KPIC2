@@ -55,33 +55,33 @@ integration <- function(x,yf){
   return(integral)
 }
 
-PDM <- function(pic, min_snr, level, pval, iter){
-  library(matrix)
+WMPD <- function(pic, min_snr, level, pval, iter){
+  library(Matrix)
   library(IRanges)
   vec <- pic[,2]
   rts <- pic[,1]
   mzs <- pic[,3]
   peaks <- peak_detection(vec, min_snr, level)
-  
+
   vec.smooth <- WhittakerSmooth(vec, 2)
   helf.height <- vec.smooth[peaks$peakIndex]*0.5
   split.point <- sapply(1:(length(peaks$peakIndex)-1), function(s){
     peaks$peakIndex[s]+which.min(vec.smooth[peaks$peakIndex[s]:peaks$peakIndex[s+1]])
   })
   split.point <- unique(c(1, split.point, length(vec)))
-  
+
   peak.ranges <- lapply(1:length(peaks$peakIndex),function(s){
     split.point[s]+which(vec.smooth[split.point[s]:split.point[s+1]]>helf.height[s])-1
   })
-  
+
   peak.mzs <- lapply(peak.ranges, function(peak.range){
     mzs[peak.range]
   })
-  
+
   pvals <- sapply(1:(length(peak.mzs)-1),function(s){
     t.test(peak.mzs[[s]], peak.mzs[[s+1]])$p.value
   })
-  
+
   TP <- rep(TRUE, length(peaks$peakIndex))
   for (i in 1:length(pvals)){
     if (pvals[i] > pval){
@@ -96,9 +96,19 @@ PDM <- function(pic, min_snr, level, pval, iter){
   peaks$peakScale <- peaks$peakScale[TP]
   peaks$snr <- peaks$snr[TP]
   peaks$signals <- peaks$signals[TP]
-  
+
   res <- .PICfit(peaks, pic, iter)
+  positions <- rts[peaks$peakIndex]
+  areas <- sapply(res$fitpics, function(fp){
+    integration(rts, fp)
+  })
   plot.resolve(pic, res)
+  heights <- sapply(res$fitpics, function(fp){
+    max(fp)
+  })
+  res$peak$positions <- positions
+  res$peak$areas <- areas
+  res$peak$heights <- heights
   return(res)
 }
 
@@ -117,15 +127,20 @@ plot.resolve <- function(pic, res){
   raw.vec <- pic[,2]
   fit.pics <- do.call(rbind, res$fitpics)
   sum.vec <- colSums(fit.pics)
-  
-  p <- plot_ly(x = rts, y = raw.vec, type = 'scatter', mode = 'lines', name = 'raw') %>% 
-    add_trace(x = rts, y = sum.vec, name = 'fitted') %>%
+
+  p <- plot_ly(x = rts, y = raw.vec, type = 'scatter', name = 'raw') %>%
     layout(xaxis = list(title = 'Retention Time (s)'),
            yaxis = list (title = 'Intensity'))
-  
+
   for (i in 1:nrow(fit.pics)) {
     name <- paste('peak ', i)
-    p <- add_trace(p, x = rts, y = fit.pics[i,],  line = list(dash = 'dash'), name = name)
+    p <- add_trace(p, x = rts, y = fit.pics[i,], line = list(dash = 'dash'), mode='line', name = name)
   }
-  p
+  p <- add_trace(p, x = rts, y = sum.vec, mode='line' , name = 'fitted')
+  fitmodel <- colSums(do.call(rbind, res$fitpics))
+  fiterror <- sqrt(sum((fitmodel-pic[,2])^2))/sum(pic[,2])*100
+  R.square <- sum((mean(pic[,2])-fitmodel)^2)/sum((pic[,2]-mean(pic[,2]))^2)
+  show(p)
+  cat('fiterror: ', fiterror, '%', '\n')
+  cat('R-square: ', R.square, '\n')
 }
