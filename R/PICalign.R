@@ -66,7 +66,7 @@ PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
       indj <- peakmat[,'sample']==j
       peakinfoj <- peakmat[indj,]
 
-      lag_p <- round(predict(mod, x=peakinfoj[,'rt']))
+      lag_p <- round(predict(mod, data.frame(x=peakinfoj[,'rt'])))
       lag_rt <- freq*lag_p
 
       peakinfoj[,c('rt','rtmin','rtmax')] <- peakinfoj[,c('rt','rtmin','rtmax')]+ lag_rt

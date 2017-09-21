@@ -60,7 +60,7 @@ fillPeaks.EIBPC <- function(groups, extand_mz=20, extand_rt=5, min_snr=3, std='m
       rtrange <- c(data.mat['rtmin',j]-extand_rt, data.mat['rtmax',j]+extand_rt)
       mzrange <- c(data.mat['mzmin',j]*(1-extand_mz/10^6), data.mat['mzmax',j]*(1+extand_mz/10^6))
       eibpc <- .EIBPC(raw, mzrange, rtrange)
-      if (nrow(eibpc)<10){next}
+      if (length(eibpc)<10){next}
       ifpeak <- peak_detection(eibpc[,2], min_snr)
       if (length(ifpeak$peakIndex)>0){
         if (std=='maxo'){this.int <- max(eibpc[,2])
@@ -87,6 +87,7 @@ fillPeaks.EIBPC <- function(groups, extand_mz=20, extand_rt=5, min_snr=3, std='m
   if (nrow(roi)<1){return(roi)}
   setkey(roi,scans)
 
+  if (length(roi$scans) < 1) {return(NULL)}
   scan.bpc <- roi$scans[1]:roi$scans[length(roi$scans)]
   ints.bpc <- rep(0, length(scan.bpc))
   for (i in 1:length(scan.bpc)){

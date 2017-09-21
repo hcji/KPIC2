@@ -8,7 +8,7 @@ using namespace Rcpp;
 
 // getPIP
 IntegerVector getPIP(IntegerVector seeds, IntegerVector scans, NumericVector mzs, IntegerVector clu, double mztol, int gap);
-RcppExport SEXP KPIC_getPIP(SEXP seedsSEXP, SEXP scansSEXP, SEXP mzsSEXP, SEXP cluSEXP, SEXP mztolSEXP, SEXP gapSEXP) {
+RcppExport SEXP _KPIC_getPIP(SEXP seedsSEXP, SEXP scansSEXP, SEXP mzsSEXP, SEXP cluSEXP, SEXP mztolSEXP, SEXP gapSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -24,7 +24,7 @@ END_RCPP
 }
 // getROI
 IntegerVector getROI(int seed, IntegerVector scans, NumericVector mzs, NumericVector ints, LogicalVector notused, double mztol, int max_width);
-RcppExport SEXP KPIC_getROI(SEXP seedSEXP, SEXP scansSEXP, SEXP mzsSEXP, SEXP intsSEXP, SEXP notusedSEXP, SEXP mztolSEXP, SEXP max_widthSEXP) {
+RcppExport SEXP _KPIC_getROI(SEXP seedSEXP, SEXP scansSEXP, SEXP mzsSEXP, SEXP intsSEXP, SEXP notusedSEXP, SEXP mztolSEXP, SEXP max_widthSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -41,7 +41,7 @@ END_RCPP
 }
 // collectPIC
 IntegerVector collectPIC(int refScan, double refMz, double refInt, IntegerVector sel_id, IntegerVector sel_scan, NumericVector sel_mz, NumericVector sel_ints, int gap, double alpha);
-RcppExport SEXP KPIC_collectPIC(SEXP refScanSEXP, SEXP refMzSEXP, SEXP refIntSEXP, SEXP sel_idSEXP, SEXP sel_scanSEXP, SEXP sel_mzSEXP, SEXP sel_intsSEXP, SEXP gapSEXP, SEXP alphaSEXP) {
+RcppExport SEXP _KPIC_collectPIC(SEXP refScanSEXP, SEXP refMzSEXP, SEXP refIntSEXP, SEXP sel_idSEXP, SEXP sel_scanSEXP, SEXP sel_mzSEXP, SEXP sel_intsSEXP, SEXP gapSEXP, SEXP alphaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -60,7 +60,7 @@ END_RCPP
 }
 // findCandidate
 NumericVector findCandidate(int ind, double mzmin, double mzmax, double rtmin, double rtmax, NumericVector mz, NumericVector rt, NumericVector group);
-RcppExport SEXP KPIC_findCandidate(SEXP indSEXP, SEXP mzminSEXP, SEXP mzmaxSEXP, SEXP rtminSEXP, SEXP rtmaxSEXP, SEXP mzSEXP, SEXP rtSEXP, SEXP groupSEXP) {
+RcppExport SEXP _KPIC_findCandidate(SEXP indSEXP, SEXP mzminSEXP, SEXP mzmaxSEXP, SEXP rtminSEXP, SEXP rtmaxSEXP, SEXP mzSEXP, SEXP rtSEXP, SEXP groupSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -78,7 +78,7 @@ END_RCPP
 }
 // waveft
 NumericMatrix waveft(NumericVector omega, NumericVector scales);
-RcppExport SEXP KPIC_waveft(SEXP omegaSEXP, SEXP scalesSEXP) {
+RcppExport SEXP _KPIC_waveft(SEXP omegaSEXP, SEXP scalesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -90,7 +90,7 @@ END_RCPP
 }
 // cwtft
 List cwtft(NumericVector val);
-RcppExport SEXP KPIC_cwtft(SEXP valSEXP) {
+RcppExport SEXP _KPIC_cwtft(SEXP valSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -101,7 +101,7 @@ END_RCPP
 }
 // localMax
 LogicalMatrix localMax(NumericMatrix cwt2d);
-RcppExport SEXP KPIC_localMax(SEXP cwt2dSEXP) {
+RcppExport SEXP _KPIC_localMax(SEXP cwt2dSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -112,7 +112,7 @@ END_RCPP
 }
 // localMin
 LogicalMatrix localMin(NumericMatrix cwt2d);
-RcppExport SEXP KPIC_localMin(SEXP cwt2dSEXP) {
+RcppExport SEXP _KPIC_localMin(SEXP cwt2dSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -123,7 +123,7 @@ END_RCPP
 }
 // ridgesDetection
 List ridgesDetection(NumericMatrix cwt2d, NumericVector val);
-RcppExport SEXP KPIC_ridgesDetection(SEXP cwt2dSEXP, SEXP valSEXP) {
+RcppExport SEXP _KPIC_ridgesDetection(SEXP cwt2dSEXP, SEXP valSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -135,7 +135,7 @@ END_RCPP
 }
 // peaksPosition
 NumericVector peaksPosition(NumericVector val, List ridges, NumericMatrix cwt2d);
-RcppExport SEXP KPIC_peaksPosition(SEXP valSEXP, SEXP ridgesSEXP, SEXP cwt2dSEXP) {
+RcppExport SEXP _KPIC_peaksPosition(SEXP valSEXP, SEXP ridgesSEXP, SEXP cwt2dSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -148,7 +148,7 @@ END_RCPP
 }
 // getSignal
 List getSignal(NumericMatrix cwt2d, List ridges, NumericVector peaks);
-RcppExport SEXP KPIC_getSignal(SEXP cwt2dSEXP, SEXP ridgesSEXP, SEXP peaksSEXP) {
+RcppExport SEXP _KPIC_getSignal(SEXP cwt2dSEXP, SEXP ridgesSEXP, SEXP peaksSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -161,17 +161,17 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"KPIC_getPIP", (DL_FUNC) &KPIC_getPIP, 6},
-    {"KPIC_getROI", (DL_FUNC) &KPIC_getROI, 7},
-    {"KPIC_collectPIC", (DL_FUNC) &KPIC_collectPIC, 9},
-    {"KPIC_findCandidate", (DL_FUNC) &KPIC_findCandidate, 8},
-    {"KPIC_waveft", (DL_FUNC) &KPIC_waveft, 2},
-    {"KPIC_cwtft", (DL_FUNC) &KPIC_cwtft, 1},
-    {"KPIC_localMax", (DL_FUNC) &KPIC_localMax, 1},
-    {"KPIC_localMin", (DL_FUNC) &KPIC_localMin, 1},
-    {"KPIC_ridgesDetection", (DL_FUNC) &KPIC_ridgesDetection, 2},
-    {"KPIC_peaksPosition", (DL_FUNC) &KPIC_peaksPosition, 3},
-    {"KPIC_getSignal", (DL_FUNC) &KPIC_getSignal, 3},
+    {"_KPIC_getPIP", (DL_FUNC) &_KPIC_getPIP, 6},
+    {"_KPIC_getROI", (DL_FUNC) &_KPIC_getROI, 7},
+    {"_KPIC_collectPIC", (DL_FUNC) &_KPIC_collectPIC, 9},
+    {"_KPIC_findCandidate", (DL_FUNC) &_KPIC_findCandidate, 8},
+    {"_KPIC_waveft", (DL_FUNC) &_KPIC_waveft, 2},
+    {"_KPIC_cwtft", (DL_FUNC) &_KPIC_cwtft, 1},
+    {"_KPIC_localMax", (DL_FUNC) &_KPIC_localMax, 1},
+    {"_KPIC_localMin", (DL_FUNC) &_KPIC_localMin, 1},
+    {"_KPIC_ridgesDetection", (DL_FUNC) &_KPIC_ridgesDetection, 2},
+    {"_KPIC_peaksPosition", (DL_FUNC) &_KPIC_peaksPosition, 3},
+    {"_KPIC_getSignal", (DL_FUNC) &_KPIC_getSignal, 3},
     {NULL, NULL, 0}
 };
 

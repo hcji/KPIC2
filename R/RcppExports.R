@@ -2,46 +2,46 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 getPIP <- function(seeds, scans, mzs, clu, mztol, gap) {
-    .Call('KPIC_getPIP', PACKAGE = 'KPIC', seeds, scans, mzs, clu, mztol, gap)
+    .Call('_KPIC_getPIP', PACKAGE = 'KPIC', seeds, scans, mzs, clu, mztol, gap)
 }
 
 getROI <- function(seed, scans, mzs, ints, notused, mztol, max_width) {
-    .Call('KPIC_getROI', PACKAGE = 'KPIC', seed, scans, mzs, ints, notused, mztol, max_width)
+    .Call('_KPIC_getROI', PACKAGE = 'KPIC', seed, scans, mzs, ints, notused, mztol, max_width)
 }
 
 collectPIC <- function(refScan, refMz, refInt, sel_id, sel_scan, sel_mz, sel_ints, gap, alpha) {
-    .Call('KPIC_collectPIC', PACKAGE = 'KPIC', refScan, refMz, refInt, sel_id, sel_scan, sel_mz, sel_ints, gap, alpha)
+    .Call('_KPIC_collectPIC', PACKAGE = 'KPIC', refScan, refMz, refInt, sel_id, sel_scan, sel_mz, sel_ints, gap, alpha)
 }
 
 findCandidate <- function(ind, mzmin, mzmax, rtmin, rtmax, mz, rt, group) {
-    .Call('KPIC_findCandidate', PACKAGE = 'KPIC', ind, mzmin, mzmax, rtmin, rtmax, mz, rt, group)
+    .Call('_KPIC_findCandidate', PACKAGE = 'KPIC', ind, mzmin, mzmax, rtmin, rtmax, mz, rt, group)
 }
 
 waveft <- function(omega, scales) {
-    .Call('KPIC_waveft', PACKAGE = 'KPIC', omega, scales)
+    .Call('_KPIC_waveft', PACKAGE = 'KPIC', omega, scales)
 }
 
 cwtft <- function(val) {
-    .Call('KPIC_cwtft', PACKAGE = 'KPIC', val)
+    .Call('_KPIC_cwtft', PACKAGE = 'KPIC', val)
 }
 
 localMax <- function(cwt2d) {
-    .Call('KPIC_localMax', PACKAGE = 'KPIC', cwt2d)
+    .Call('_KPIC_localMax', PACKAGE = 'KPIC', cwt2d)
 }
 
 localMin <- function(cwt2d) {
-    .Call('KPIC_localMin', PACKAGE = 'KPIC', cwt2d)
+    .Call('_KPIC_localMin', PACKAGE = 'KPIC', cwt2d)
 }
 
 ridgesDetection <- function(cwt2d, val) {
-    .Call('KPIC_ridgesDetection', PACKAGE = 'KPIC', cwt2d, val)
+    .Call('_KPIC_ridgesDetection', PACKAGE = 'KPIC', cwt2d, val)
 }
 
 peaksPosition <- function(val, ridges, cwt2d) {
-    .Call('KPIC_peaksPosition', PACKAGE = 'KPIC', val, ridges, cwt2d)
+    .Call('_KPIC_peaksPosition', PACKAGE = 'KPIC', val, ridges, cwt2d)
 }
 
 getSignal <- function(cwt2d, ridges, peaks) {
-    .Call('KPIC_getSignal', PACKAGE = 'KPIC', cwt2d, ridges, peaks)
+    .Call('_KPIC_getSignal', PACKAGE = 'KPIC', cwt2d, ridges, peaks)
 }
 
