@@ -65,7 +65,7 @@
 ### Pattern recognition:
   Finding the difference between two class. random forest is used for the example.
 
-    labels <- c(rep(1,6), rep(2,6)) # the classes of each sample belongs to
+    labels <- c(rep('A',6), rep('B',6)) # the class of each sample
     analyst.RF(labels, data$data.mat)
 
 ## Contact
