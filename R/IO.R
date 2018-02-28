@@ -6,7 +6,7 @@ LoadData <- function(filename)
   {
     msobj <- openMSfile(filename,backend="netCDF")
   }else{
-    msobj <- openMSfile(filename)
+    msobj <- openMSfile(filename,backend="Ramp")
   }
 
   peakInfo <- peaks(msobj)
@@ -38,7 +38,7 @@ readPICs <- function(files){
   info <- file.info(files)
   listed <- list.files(files[info$isdir], pattern = filepattern,
                        recursive = TRUE, full.names = TRUE)
-  
+
   output <- list()
   for (i in 1:length(listed)){
     output[[i]] <- fromJSON(file=listed[i])
