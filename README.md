@@ -11,9 +11,15 @@
 
 ### Install KPIC2:  
 
+#### Released version (Suggested)
+Download the source package at url[https://github.com/hcji/KPIC2/releases] and install the package locally.
+
+#### Development version
+Note: Development may include bugs/error and functions not ready.
+
     library(devtools);  
     install_github("hcji/KPIC2")
-		
+	
 ## Usage:
 ### Feature detection:
   Extract pure ion chromatograms via optimized K-means clustering of ions in region of interest, and detect peaks of PICs.
