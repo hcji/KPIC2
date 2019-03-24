@@ -2,7 +2,7 @@ PICset.group <- function(picset, tolerance=c(0.01,10),weight=c(0.8,0.2), method=
   library(dbscan)
   library(data.table)
 
-  minSample = frac*length(picset)
+  minSample = max(1, frac*length(picset))
   peakmat <- lapply(picset, function(pics){
     return(pics$peakinfo)
   })
@@ -36,7 +36,7 @@ PICset.group <- function(picset, tolerance=c(0.01,10),weight=c(0.8,0.2), method=
     candidates <- findCandidate(i, mz_s, mz_e, rt_s, rt_e, peakmat[,'mz'], peakmat[,'rt'], group)
     if (is.null(candidates)){next}
 
-    if (length(candidates)<minSample) {
+    if (length(candidates) <= minSample) {
       group[candidates] <- -1
       next
       } else {
@@ -81,7 +81,7 @@ PICset.group <- function(picset, tolerance=c(0.01,10),weight=c(0.8,0.2), method=
   peakmat <- as.data.table(cbind(peakmat,group))
   setkey(peakmat, group)
 
-  splits <- lapply(1:group_id, function(s){
+  splits <- lapply(1:max(group), function(s){
     peakmat[.(s),]
   })
   counts <- sapply(splits,nrow)
@@ -99,7 +99,6 @@ PICset.group <- function(picset, tolerance=c(0.01,10),weight=c(0.8,0.2), method=
 
   peakmat <- do.call(rbind, splits[finl])
   group.info <- cbind(group.id, group.rt, group.mz, mean.ints, counts)[finl,]
-
   return(list(group.info=group.info, peakmat=peakmat[,-1], picset=picset))
 }
 
