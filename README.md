@@ -5,9 +5,8 @@
 
 ### Install Depends: 
 
-    install.packages(c("devtools", "Rcpp", "RcppArmadillo", "mzR", "parallel", "shiny", "plotly", "data.table", "GA", "IRanges", "dbscan", "randomForest"))
-    source("https://bioconductor.org/biocLite.R")
-    biocLite(c("mzR","ropls"))
+    install.packages(c("BiocManager", "devtools", "Ckmeans.1d.dp", "Rcpp", "RcppArmadillo", "mzR", "parallel", "shiny", "plotly", "data.table", "GA", "IRanges", "dbscan", "randomForest"))
+    BiocManager::install(c("mzR","ropls"))
 
 ### Install KPIC2:  
 
@@ -27,15 +26,18 @@ Note: Development may include bugs/error and functions not ready.
 
     library(KPIC)
     filename <- 'E:/LC-MS data/example/1-1_Seg1Ev1.mzXML'
-    pics <- getPIC.kmeans(filename, level=50000)
-	pics <- PICsplit(pics)
-	pics <- getPeaks(pics)
+    raw <- LoadData(filename)
+    pics <- getPIC(raw, level=50000)
+    # pics <- getPIC.kmeans(raw, level=50000)  ## use k-means 
+    pics <- PICsplit(pics) # Optional
+    pics <- getPeaks(pics)
     viewPICs(pics)
 
   For a set of samples:
 
     files <- 'E:/LC-MS data/example'
-    PICS <- PICset.kmeans(files, level=50000, export=F, par=T)
+    PICS <- PICset(files, level=50000, export=F, par=T)
+    # PICS <- PICset.kmeans(files, level=50000, export=F, par=T)  ## use k-means 
     PICS <- PICset.split(PICS)
     PICS <- PICset.getPeaks(PICS)
     viewPICs(PICS[[1]])
