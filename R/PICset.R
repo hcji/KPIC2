@@ -24,7 +24,6 @@ rtequal <- function(rt0,pics){
 }
 
 PICset <- function(files, level, mztol=0.1, gap=3, width=5, min_snr=4, equal=TRUE, export=FALSE, par=TRUE, ...){
-  library(parallel)
   path <- readfiles(files)
 
   if (par){
@@ -52,7 +51,6 @@ PICset <- function(files, level, mztol=0.1, gap=3, width=5, min_snr=4, equal=TRU
 }
 
 PICset.kmeans <- function(files, level, mztol=0.1, gap=3, width=c(5,60), min_snr=4, alpha=0.3, equal=TRUE, export=FALSE, par=TRUE, ...){
-  library(parallel)
   cl <- makeCluster(getOption("cl.cores", detectCores(logical = FALSE)))
   path <- readfiles(files)
 
@@ -80,7 +78,6 @@ PICset.kmeans <- function(files, level, mztol=0.1, gap=3, width=c(5,60), min_snr
 }
 
 PICset.split <- function(picset, par=FALSE) {
-  library(parallel)
   if (!par){
     for (i in 1:length(picset)){
       picset[[i]] <- PICsplit(picset[[i]])
@@ -95,7 +92,6 @@ PICset.split <- function(picset, par=FALSE) {
 }
 
 PICset.resolve <- function(picset, pval=0.01, par=FALSE) {
-  library(parallel)
   if (!par){
     for (i in 1:length(picset)){
       picset[[i]] <- PICresolve(picset[[i]], pval)
@@ -110,7 +106,6 @@ PICset.resolve <- function(picset, pval=0.01, par=FALSE) {
 }
 
 PICset.fit <- function(picset, iter=50, par=FALSE) {
-  library(parallel)
   if (!par){
     for (i in 1:length(picset)){
       picset[[i]] <- PICfit(picset[[i]], iter)

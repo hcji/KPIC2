@@ -1,6 +1,5 @@
 LoadData <- function(filename)
 {
-  library(mzR)
   splitname <- strsplit(filename,"\\.")[[1]]
   if(tolower(splitname[length(splitname)]) == "cdf")
   {
@@ -32,7 +31,6 @@ LoadData <- function(filename)
 }
 
 readPICs <- function(files){
-  library(rjson)
   filepattern <- c("[j][s][o][n]")
   filepattern <- paste(paste("\\.", filepattern, "$", sep = ""), collapse = "|")
   info <- file.info(files)

@@ -1,5 +1,4 @@
 getDataMatrix <- function(groups, std='maxo'){
-  library(data.table)
   group.info <- as.data.table(groups$group.info)
   if (!'cluster'%in%colnames(group.info)){
     group.info[,cluster:=1:nrow(group.info)]
@@ -74,7 +73,6 @@ fillPeaks.EIBPC <- function(groups, extand_mz=20, extand_rt=5, min_snr=3, std='m
 }
 
 .EIBPC <- function(raw, mzrange, rtrange){
-  library(data.table)
   scans <- findInterval(rtrange, raw$times)
   inds <- findInterval(scans, raw$scans)
   inds <- inds[1]:inds[2]

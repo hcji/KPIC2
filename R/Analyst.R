@@ -1,7 +1,4 @@
 analyst.RF <- function(labels, data){
-  library(shiny)
-  library(plotly)
-  library(randomForest)
   
   labels <- as.factor(labels)
   data <- as.matrix(data)
@@ -127,9 +124,6 @@ analyst.RF <- function(labels, data){
 }
 
 analyst.OPLS <- function(labels, data){
-  library(shiny)
-  library(plotly)
-  library(ropls)
   labels <- as.vector(labels)
   data <- as.matrix(data)
 

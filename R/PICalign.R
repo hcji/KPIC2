@@ -1,5 +1,4 @@
 PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
-  library(data.table)
   peakmat <- as.matrix(groups$peakmat)
   picset <- groups$picset
   group.info <- groups$group.info
