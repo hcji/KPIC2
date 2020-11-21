@@ -5,7 +5,7 @@ LoadData <- function(filename)
   {
     msobj <- openMSfile(filename,backend="netCDF")
   }else{
-    msobj <- openMSfile(filename,backend="Ramp")
+    msobj <- openMSfile(filename)
   }
 
   peakInfo <- peaks(msobj)
