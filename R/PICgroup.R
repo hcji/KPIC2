@@ -1,6 +1,4 @@
 PICset.group <- function(picset, tolerance=c(0.01,10),weight=c(0.8,0.2), method='score', frac=0.5){
-  library(dbscan)
-  library(data.table)
 
   minSample = max(1, frac*length(picset))
   peakmat <- lapply(picset, function(pics){
@@ -103,7 +101,6 @@ PICset.group <- function(picset, tolerance=c(0.01,10),weight=c(0.8,0.2), method=
 }
 
 groupCombine <- function(groups,min_corr=0.9,type='tailed',window=10){
-  library(data.table)
 
   peakmat <- groups$peakmat
   picset <- groups$picset
@@ -140,7 +137,6 @@ groupCombine <- function(groups,min_corr=0.9,type='tailed',window=10){
 }
 
 getPseudospecturm <- function(groups, clu.id){
-  library(data.table)
   peakmat <- groups$peakmat
   setkey(peakmat, group)
   group.info <- groups$group.info

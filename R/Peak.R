@@ -56,8 +56,6 @@ integration <- function(x,yf){
 }
 
 WMPD <- function(pic, min_snr, level, pval, iter){
-  library(Matrix)
-  library(IRanges)
   vec <- pic[,2]
   rts <- pic[,1]
   mzs <- pic[,3]
@@ -122,7 +120,6 @@ WhittakerSmooth <- function(y,lambda){
 }
 
 plot.resolve <- function(pic, res){
-  library(plotly)
   rts <- pic[,1]
   raw.vec <- pic[,2]
   fit.pics <- do.call(rbind, res$fitpics)

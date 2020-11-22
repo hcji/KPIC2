@@ -52,7 +52,6 @@ getPIC <- function(raw, level, mztol=0.1, gap=3, width=5, min_snr=4, export='FAL
 
   output <- list(path=path, scantime=scantime, pics=pics, peaks=peaks)
   if (export){
-    library(rjson)
     exportJSON <- toJSON(output)
     splitname <- strsplit(path,"\\.")[[1]][1]
     outpath <- paste(splitname,'json',sep='.')
@@ -63,8 +62,6 @@ getPIC <- function(raw, level, mztol=0.1, gap=3, width=5, min_snr=4, export='FAL
 }
 
 getPIC.kmeans <- function(raw, level, mztol=0.1, gap=3, width=c(5,60), alpha=0.3, min_snr=4, export='FALSE', ...){
-  library(Ckmeans.1d.dp)
-  library(data.table)
 
   orders <- order(raw$mzs)
   mzs <- raw$mzs[orders]
@@ -133,7 +130,6 @@ getPIC.kmeans <- function(raw, level, mztol=0.1, gap=3, width=c(5,60), alpha=0.3
 
   output <- list(path=path, scantime=scantime, pics=pics, peaks=peaks)
   if (export){
-    library(rjson)
     exportJSON <- toJSON(output)
     splitname <- strsplit(filename,"\\.")[[1]][1]
     outpath <- paste(splitname,'json',sep='.')
@@ -280,8 +276,6 @@ getPeaks <- function(pics){
 }
 
 PICresolve <- function(pics, pval=0.01){
-  library(IRanges)
-  library(stats)
 
   pics1 <- list()
   peaks1 <- list()
@@ -414,7 +408,6 @@ PICresolve <- function(pics, pval=0.01){
 }
 
 PICfit <- function(pics, iter=50){
-  library(GA)
   peaks1 <- list()
   pics1 <- list()
   for (s in 1:length(pics$pics)) {

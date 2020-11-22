@@ -1,12 +1,11 @@
 LoadData <- function(filename)
 {
-  library(mzR)
   splitname <- strsplit(filename,"\\.")[[1]]
   if(tolower(splitname[length(splitname)]) == "cdf")
   {
     msobj <- openMSfile(filename,backend="netCDF")
   }else{
-    msobj <- openMSfile(filename,backend="Ramp")
+    msobj <- openMSfile(filename)
   }
 
   peakInfo <- peaks(msobj)
@@ -32,7 +31,6 @@ LoadData <- function(filename)
 }
 
 readPICs <- function(files){
-  library(rjson)
   filepattern <- c("[j][s][o][n]")
   filepattern <- paste(paste("\\.", filepattern, "$", sep = ""), collapse = "|")
   info <- file.info(files)

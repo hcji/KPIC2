@@ -1,5 +1,4 @@
 getTICs <- function(files, method='BPC'){
-  library(mzR)
   path <- readfiles(files)
   tics <- lapply(path,function(filename){
     splitname <- strsplit(filename,"\\.")[[1]]
@@ -29,8 +28,6 @@ getTICs <- function(files, method='BPC'){
 }
 
 viewTICs <- function(tics){
-  library(shiny)
-  library(plotly)
 
   ui <- fluidPage(
     titlePanel("TIC Viewer"),
@@ -65,7 +62,6 @@ viewTICs <- function(tics){
 }
 
 getMS <- function(filename){
-  library(mzR)
 
   splitname <- strsplit(filename,"\\.")[[1]]
   if(tolower(splitname[length(splitname)]) == "cdf")
@@ -102,8 +98,6 @@ stem <- function(x,y,pch=5,linecol=1,col='blue',cex.lab=1.2,cex.axis=1.3,font=2,
 }
 
 viewMS <- function(MS){
-  library(shiny)
-  library(plotly)
 
   ui <- fluidPage(
     titlePanel("MS Viewer"),
@@ -136,8 +130,6 @@ viewMS <- function(MS){
 }
 
 viewPICs <- function(pics){
-  library(shiny)
-  library(plotly)
 
   ui <- fluidPage(
     titlePanel("PIC Viewer"),
@@ -185,8 +177,6 @@ viewPICs <- function(pics){
 }
 
 viewGroups <- function(groups){
-  library(shiny)
-  library(plotly)
 
   ui <- fluidPage(
     titlePanel("groups Viewer"),
@@ -229,9 +219,6 @@ viewGroups <- function(groups){
 }
 
 viewAlign <- function(groups_raw, groups_align){
-  library(shiny)
-  library(plotly)
-  library(data.table)
 
   peakmat_raw <- as.data.table(groups_raw$peakmat)
   setkey(peakmat_raw, group)
@@ -328,8 +315,6 @@ viewAlign <- function(groups_raw, groups_align){
 }
 
 viewPseudospecturm <- function(groups){
-  library(shiny)
-  library(plotly)
 
   ui <- fluidPage(
     titlePanel("Pseudospecturm Viewer"),
