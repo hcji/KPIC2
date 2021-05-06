@@ -111,8 +111,7 @@ getPIC.kmeans <- function(raw, level, mztol=0.1, gap=3, width=c(5,60), alpha=0.3
   pics <- lapply(pics,function(pic){
     scan <- min(pic[,1]):max(pic[,1])
     int <- approx(pic[,1],pic[,2],scan)$y
-    mz <- rep(NA,length(scan))
-    mz[pic[,1]%in%scan] <- pic[,3]
+    mz <- pic[match(scan, pic[,1], nomatch = NA),3]
     cbind(scan,int,mz)
   })
   gc()
