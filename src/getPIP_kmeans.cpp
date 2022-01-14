@@ -60,7 +60,7 @@ IntegerVector collectPIC(int refScan, double refMz, double refInt, IntegerVector
     if (gap0 > gap){
       break;
     }
-    winner_int = -DOUBLE_XMAX;
+    winner_int = -DBL_MAX;
     winner = -1;
     w = alpha;
     at = 2*S1-S2;
@@ -95,7 +95,7 @@ IntegerVector collectPIC(int refScan, double refMz, double refInt, IntegerVector
     if (gap0 > gap){
       break;
     }
-    winner_int = -DOUBLE_XMAX;
+    winner_int = -DBL_MAX;
     winner = -1;
     w = alpha;
     at = 2*S1-S2;
