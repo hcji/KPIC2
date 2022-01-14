@@ -11,7 +11,7 @@
 ### Install KPIC2:  
 
 #### Released version (Suggested)
-Download the source package at url[https://github.com/hcji/KPIC2/releases] and install the package locally.
+Download the source package at [url](https://github.com/hcji/KPIC2/releases) and install the package locally.
 
 #### Development version
 Note: Development may include bugs/error and functions not ready.
