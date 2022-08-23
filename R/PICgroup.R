@@ -7,12 +7,14 @@ PICset.group <- function(picset, tolerance=c(0.01,10),weight=c(0.8,0.2), method=
   sample <- unlist(lapply(1:length(peakmat),function(s){
     return(rep(s,nrow(peakmat[[s]])))
   }))
+  sample <- sample[sample != 0]
   index <- unlist(lapply(1:length(peakmat),function(s){
-    return(1:nrow(peakmat[[s]]))
+    return(seq_len(nrow(peakmat[[s]])))
   }))
+  index <- index[index != 0]
   peakmat <- do.call(rbind,peakmat)
   peakmat <- cbind(sample,index,peakmat)
-  peakmat <- peakmat[order(peakmat[,'mz']),]
+  peakmat <- peakmat[order(peakmat[,'mz']), , drop = FALSE]
 
   id <- 1:nrow(peakmat)
   group <- rep(0,nrow(peakmat))
