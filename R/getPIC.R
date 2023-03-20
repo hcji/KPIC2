@@ -152,7 +152,7 @@ getPIC.kmeans <- function(raw, level, mztol=0.1, gap=3, width=c(5,60), alpha=0.3
     starts <- c(1,splp+1)
     ends <- c(splp,nrow(pic))
     pic <- lapply(1:length(starts),function(s){
-      pic[starts[s]:ends[s],]
+      pic[starts[s]:ends[s],,drop=FALSE]
     })
     ps <- c(1,sp+1)
     pe <- c(sp,length(peak$peakIndex))
