@@ -1,12 +1,14 @@
 PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
   peakmat <- as.matrix(groups$peakmat)
+  if (nrow(peakmat) == 0)
+    return(groups)
   picset <- groups$picset
   group.info <- groups$group.info
   rm(groups)
 
   ngroup <- max(peakmat[,'group'])
   id <- 1:nrow(peakmat)
-  peakmat <- cbind(id, peakmat[order(peakmat[,'group']),])
+  peakmat <- cbind(id, peakmat[order(peakmat[,'group']),,drop=FALSE])
   sp <- findInterval((0:ngroup)+0.5,peakmat[,'group'])
   freq <- round(mean(diff(picset[[1]]$scantime)),4)
 
@@ -53,7 +55,7 @@ PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
         picset[[sams[k]]]$pics[[inds[k]]] <- apics[[k]]
         picset[[sams[k]]]$peakinfo[inds[k], c('rt','rtmin','rtmax')] <- picset[[sams[k]]]$peakinfo[inds[k], c('rt','rtmin','rtmax')] + lags[k]*freq
       }
-      peakmat[gpi[,'id'],c('rt','rtmin','rtmax')] <- peakmat[gpi[,'id'],c('rt','rtmin','rtmax')] + lags*freq
+      peakmat[gpi[,'id'],c('rt','rtmin','rtmax')] <- peakmat[gpi[,'id'],c('rt','rtmin','rtmax'), drop = FALSE] + lags*freq
     }
   }
 
@@ -63,7 +65,7 @@ PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
       y = lag_mat[j,]
       mod <- loess(y~x, span=span, weights=weights)
       indj <- peakmat[,'sample']==j
-      peakinfoj <- peakmat[indj,]
+      peakinfoj <- peakmat[indj,,drop = FALSE]
 
       lag_p <- round(predict(mod, data.frame(x=peakinfoj[,'rt'])))
       lag_rt <- freq*lag_p
@@ -76,7 +78,7 @@ PICset.align <- function(groups, method='fftcc', move='direct', span=1.5){
       }
     }
   }
-  return(list(group.info=group.info, peakmat=as.data.table(peakmat[,-1]), picset=picset))
+  return(list(group.info=group.info, peakmat=as.data.table(peakmat[,-1,drop=FALSE]), picset=picset))
 }
 
 .align_fftcc <- function(rpic,apic){

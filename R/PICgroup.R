@@ -81,24 +81,32 @@ PICset.group <- function(picset, tolerance=c(0.01,10),weight=c(0.8,0.2), method=
   peakmat <- as.data.table(cbind(peakmat,group))
   setkey(peakmat, group)
 
-  splits <- lapply(1:max(group), function(s){
-    peakmat[.(s),]
-  })
-  counts <- sapply(splits,nrow)
-  group.id <- 1:length(splits)
-  group.mz <- sapply(splits, function(s){
-    round(mean(s$mz),2)
-  })
-  group.rt <- sapply(splits, function(s){
-    round(mean(s$rt),2)
-  })
-  mean.ints <- sapply(splits, function(s){
-    round(mean(s$maxo))
-  })
-  finl <- which(counts>=minSample)
-
-  peakmat <- do.call(rbind, splits[finl])
-  group.info <- cbind(group.id, group.rt, group.mz, mean.ints, counts)[finl,]
+  if (all(group == -1)){
+    counts <- integer(0)
+    counts <- group.id <- integer(0);
+    group.mz <- group.rt <- mean.ints <- numeric(0)
+    peakmat <- peakmat[0]
+    group.info <- cbind(group.id, group.rt, group.mz, mean.ints, counts)
+  } else {
+    splits <- lapply(1:max(group), function(s){
+      peakmat[.(s),]
+    })
+    counts <- sapply(splits,nrow)
+    group.id <- 1:length(splits)
+    group.mz <- sapply(splits, function(s){
+      round(mean(s$mz),2)
+    })
+    group.rt <- sapply(splits, function(s){
+      round(mean(s$rt),2)
+    })
+    mean.ints <- sapply(splits, function(s){
+      round(mean(s$maxo))
+    })
+    finl <- which(counts>=minSample)
+    
+    peakmat <- do.call(rbind, splits[finl])
+    group.info <- cbind(group.id, group.rt, group.mz, mean.ints, counts)[finl,,drop=FALSE]
+  }
   return(list(group.info=group.info, peakmat=peakmat[,-1], picset=picset))
 }
 
